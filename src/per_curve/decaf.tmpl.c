@@ -38,9 +38,9 @@ static const scalar_t point_scalarmul_adjustment = {{{
 const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES] = { $(ser(mont_base,8)) };
 
 #define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
-const gf RISTRETTO_FACTOR = {{{
+const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
     $(ser(msqrt(d-1 if imagine_twist else -d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
-}}};
+)};
 
 #if IMAGINE_TWIST
 #define TWISTED_D (-(EDWARDS_D))
