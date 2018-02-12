@@ -21,8 +21,12 @@
 #	define htole64(x) LE_64(x)
 #	define le64toh(x) LE_64(x)
 #elif defined(_WIN16) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__)
+#	if defined(_MSC_VER)
+#		define __builtin_bswap64(x) _byteswap_uint64((x))
+#	else
+#		include <sys/param.h>
+#	endif
 #	include <winsock2.h>
-#	include <sys/param.h>
 #	if BYTE_ORDER == LITTLE_ENDIAN
 #		define htole64(x) (x)
 #		define le64toh(x) (x)

@@ -7,6 +7,23 @@
 #include <decaf.h>
 #include <decaf/ed$(gf_bits).h>
 
+/* MSVC has no builtint ctz, this is a fix as in
+https://stackoverflow.com/questions/355967/how-to-use-msvc-intrinsics-to-get-the-equivalent-of-this-gcc-code/5468852#5468852
+*/
+#ifdef _MSC_VER
+#include <intrin.h>
+
+uint32_t __inline ctz(uint32_t value)
+{
+    DWORD trailing_zero = 0;
+    if ( _BitScanForward( &trailing_zero, value ) )
+        return trailing_zero;
+    else
+        return 32;  // This is undefined, I better choose 32 than 0
+}
+#define __builtin_ctz(x) ctz(x)
+#endif
+
 /* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
 #define SCALAR_BITS $(C_NS)_SCALAR_BITS
@@ -514,6 +531,7 @@ void API_NS(point_scalarmul) (
     const point_t b,
     const scalar_t scalar
 ) {
+
     const int WINDOW = DECAF_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
@@ -524,7 +542,7 @@ void API_NS(point_scalarmul) (
     API_NS(scalar_halve)(scalar1x,scalar1x);
     
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_t pn, multiples[NTABLE];
+    pniels_t pn, multiples[1<<((int)(DECAF_WINDOW_BITS)-1)];  // == NTABLE (MSVC compatibility issue)
     point_t tmp;
     prepare_fixed_window(multiples, b, NTABLE);
 
@@ -575,12 +593,13 @@ void API_NS(point_double_scalarmul) (
     const scalar_t scalarb,
     const point_t c,
     const scalar_t scalarc
-) {
+) {    
+    
     const int WINDOW = DECAF_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
-        
+
     scalar_t scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
@@ -588,9 +607,10 @@ void API_NS(point_double_scalarmul) (
     API_NS(scalar_halve)(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_t pn, multiples1[NTABLE], multiples2[NTABLE];
+    pniels_t pn, multiples1[1<<((int)(DECAF_WINDOW_BITS)-1)], multiples2[1<<((int)(DECAF_WINDOW_BITS)-1)];
+    // Array size above equal NTABLE (MSVC compatibility issue)
     point_t tmp;
-    prepare_fixed_window(multiples1, b, NTABLE);
+    prepare_fixed_window(multiples1, b, NTABLE);  
     prepare_fixed_window(multiples2, c, NTABLE);
 
     /* Initialize. */
@@ -652,11 +672,13 @@ void API_NS(point_dual_scalarmul) (
     const scalar_t scalar1,
     const scalar_t scalar2
 ) {
+    
     const int WINDOW = DECAF_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
-        
+
+
     scalar_t scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
@@ -664,7 +686,9 @@ void API_NS(point_dual_scalarmul) (
     API_NS(scalar_halve)(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
-    point_t multiples1[NTABLE], multiples2[NTABLE], working, tmp;
+    point_t multiples1[1<<((int)(DECAF_WINDOW_BITS)-1)], multiples2[1<<((int)(DECAF_WINDOW_BITS)-1)], working, tmp;
+    // Array sizes above equal NTABLE (MSVC compatibility issue)
+
     pniels_t pn;
     
     API_NS(point_copy)(working, b);
@@ -887,11 +911,11 @@ void API_NS(precompute) (
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     assert(n*t*s >= SCALAR_BITS);
   
-    point_t working, start, doubles[t-1];
+    point_t working, start, doubles[COMBS_T-1];
     API_NS(point_copy)(working, base);
     pniels_t pn_tmp;
   
-    gf zs[n<<(t-1)], zis[n<<(t-1)];
+    gf zs[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)], zis[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)];
   
     unsigned int i,j,k;
     
@@ -1511,13 +1535,13 @@ void API_NS(base_double_scalarmul_non_secret) (
 ) {
     const int table_bits_var = DECAF_WNAF_VAR_TABLE_BITS,
         table_bits_pre = DECAF_WNAF_FIXED_TABLE_BITS;
-    struct smvt_control control_var[SCALAR_BITS/(table_bits_var+1)+3];
-    struct smvt_control control_pre[SCALAR_BITS/(table_bits_pre+1)+3];
+    struct smvt_control control_var[SCALAR_BITS/((int)(DECAF_WNAF_VAR_TABLE_BITS)+1)+3];
+    struct smvt_control control_pre[SCALAR_BITS/((int)(DECAF_WNAF_FIXED_TABLE_BITS)+1)+3];
     
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
   
-    pniels_t precmp_var[1<<table_bits_var];
+    pniels_t precmp_var[1<<(int)(DECAF_WNAF_VAR_TABLE_BITS)];
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
   
     int contp=0, contv=0, i = control_var[0].power;

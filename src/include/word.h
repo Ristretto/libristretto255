@@ -13,6 +13,11 @@
 extern int posix_memalign(void **, size_t, size_t);
 #endif
 
+// MSVC has no posix_memalign
+#if defined(_MSC_VER)
+#define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
+#endif
+
 #include <assert.h>
 #include <stdint.h>
 #include "arch_intrinsics.h"

@@ -13,7 +13,9 @@
 #define __DECAF_COMMON_H__ 1
 
 #include <stdint.h>
+#if defined (__GNUC__)  // File only exists for GNU compilers
 #include <sys/types.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,11 +27,31 @@ extern "C" {
 #define __attribute__(x)
 #define NOINLINE
 #endif
+
+/* Aliasing MSVC preprocessing to GNU preprocessing */
+#if defined _MSC_VER
+#   define __attribute__(x)        // Turn off attribute code
+#   define __attribute(x)
+#   define __restrict__ __restrict  // Use MSVC restrict code
+#   if defined _DLL
+#       define DECAF_API_VIS __declspec(dllexport)  // MSVC for visibility
+#   else
+#       define DECAF_API_VIS __declspec(dllimport)
+#   endif
+
+//#   define DECAF_NOINLINE __declspec(noinline) // MSVC for noinline
+//#   define DECAF_INLINE __forceinline // MSVC for always inline
+//#   define DECAF_WARN_UNUSED _Check_return_    
+#else // MSVC
 #define DECAF_API_VIS __attribute__((visibility("default")))
+#define DECAF_API_IMPORT
+#endif
+
+// The following are disabled for MSVC
 #define DECAF_NOINLINE  __attribute__((noinline))
-#define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
-#define DECAF_NONNULL __attribute__((nonnull))
 #define DECAF_INLINE inline __attribute__((always_inline,unused))
+#define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
+#define DECAF_NONNULL __attribute__((nonnull))  
 // Cribbed from libnotmuch
 #if defined (__clang_major__) && __clang_major__ >= 3 \
     || defined (__GNUC__) && __GNUC__ >= 5 \
@@ -98,17 +120,17 @@ decaf_successful(decaf_error_t e) {
 }
     
 /** Overwrite data with zeros.  Uses memset_s if available. */
-void decaf_bzero (
+void DECAF_API_VIS decaf_bzero (
     void *data,
     size_t size
-) DECAF_NONNULL DECAF_API_VIS;
+) DECAF_NONNULL;
 
 /** Compare two buffers, returning DECAF_TRUE if they are equal. */
-decaf_bool_t decaf_memeq (
+decaf_bool_t DECAF_API_VIS decaf_memeq (
     const void *data1,
     const void *data2,
     size_t size
-) DECAF_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
+) DECAF_NONNULL DECAF_WARN_UNUSED;
     
 #ifdef __cplusplus
 } /* extern "C" */

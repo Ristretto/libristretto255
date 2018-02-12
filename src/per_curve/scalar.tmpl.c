@@ -110,7 +110,7 @@ decaf_error_t API_NS(scalar_invert) (
      * Sliding window is fine here because the modulus isn't secret.
      */
     const int SCALAR_WINDOW_BITS = 3;
-    scalar_t precmp[1<<SCALAR_WINDOW_BITS];
+    scalar_t precmp[1<<3];  // Rewritten from SCALAR_WINDOW_BITS for windows compatibility
     const int LAST = (1<<SCALAR_WINDOW_BITS)-1;
 
     /* Precompute precmp = [a^1,a^3,...] */
