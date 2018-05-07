@@ -776,7 +776,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
     
-    #if (COFACTOR == 8) && IMAGINE_TWIST
+    #if (COFACTOR == 8)
         gf_mul ( a, p->y, q->y );
         gf_mul ( b, q->x, p->x );
         #if !(IMAGINE_TWIST)
