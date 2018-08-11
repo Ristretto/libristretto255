@@ -12,13 +12,6 @@ field_data = {
         "gf_lit_limb_bits" : 51,
         "elligator_onto" : 0
     },
-    "p448" : {
-        "gf_desc" : "2^448 - 2^224 - 1",
-        "gf_shortname" : "448",
-        "gf_impl_bits" : 512,
-        "gf_lit_limb_bits" : 56,
-        "elligator_onto" : 0
-    }
 }
 
 curve_data = {
@@ -39,31 +32,9 @@ curve_data = {
         "combs":comb_config(3,5,17),
         "wnaf":wnaf_config(5,3),
         "window_bits":4,
-        
-        "eddsa_hash": "sha512",
-        "eddsa_no_context": 1,
-        "eddsa_dom": "SigEd25519 no Ed25519 collisions",
+
         "eddsa_sigma_iso": 1
     },
-    "ed448goldilocks" : {
-        "eddsa_encode_ratio": 4,
-        "x_encode_ratio": 2,
-        "altname": None,
-        "name" : "Ed448-Goldilocks",
-        "cofactor" : 4,
-        "field" : "p448",
-        "scalar_bits" : 446,
-        "d": -39081,
-        "trace": 0x10cd77058eec492d944a725bf7a4cf635c8e9c2ab721cf5b5529eec34,
-        "rist_base": "6666666666666666666666666666666666666666666666666666666633333333333333333333333333333333333333333333333333333333",
-        "mont_base": 5,
-        
-        "combs":comb_config(5,5,18),
-        "wnaf":wnaf_config(5,3),
-        "window_bits":5,
-        
-        "eddsa_dom":"SigEd448"
-    }
 }
 
 def ser(x,bits,paren=None):
@@ -120,18 +91,9 @@ for curve,data in curve_data.items():
     if "iso_to" not in data:
         data["iso_to"] = data["name"]
         
-    if "eddsa_hash" not in data:
-        data["eddsa_hash"] = "shake256"
-        
-    if "eddsa_no_context" not in data:
-        data["eddsa_no_context"] = 0
-    
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")
     
-    if "eddsa_sigma_iso" not in data:
-        data["eddsa_sigma_iso"] = 0
-        
     if "rist_base_decoded" not in data:
         def xord(x):
             if isinstance(x,str): return ord(x)
@@ -156,5 +118,3 @@ for curve,data in curve_data.items():
     if "c_ns" not in data:
         data["c_ns"] = "decaf_" + str(data["bits"])
         data["C_NS"] = data["c_ns"].upper()
-
-    
