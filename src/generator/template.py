@@ -5,7 +5,7 @@ import os
 import argparse
 import re
 
-parser = argparse.ArgumentParser(description='Generate Decaf headers and other such files.')
+parser = argparse.ArgumentParser(description='Generate Ristretto255 headers and other such files.')
 parser.add_argument('-o', required = True, help = "Output")
 parser.add_argument('--per', required = True, help = "Files to be generated are global or per field/curve", choices=["global","field","curve"])
 parser.add_argument('--item', required = False, default = "global", help = "Which curve/field to choose")
@@ -23,7 +23,7 @@ def redoc(filename,doc,author):
          * @author %(author)s
          *
          * @copyright
-         *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \\n
+         *   Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.  \\n
          *   Released under the MIT License.  See LICENSE.txt for license information.
          *
          * %(doc)s
@@ -94,4 +94,3 @@ for name in args.files:
         f.write(ret + "\n")
 
 
-    

@@ -114,7 +114,3 @@ for curve,data in curve_data.items():
 
     data["q"] = (data["modulus"]+1-data["trace"]) // data["cofactor"]
     data["bits"] = ceil_log2(data["modulus"])
-    
-    if "c_ns" not in data:
-        data["c_ns"] = "decaf_" + str(data["bits"])
-        data["C_NS"] = data["c_ns"].upper()

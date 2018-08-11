@@ -1,11 +1,10 @@
-/** @brief Decaf high-level functions. */
+/** @brief Ristretto$(gf_bits) high-level functions. */
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include "word.h"
 #include "field.h"
 
-#include <decaf.h>
-#include <decaf/ed$(gf_bits).h>
+#include <ristretto$(gf_bits).h>
 
 /* MSVC has no builtint ctz, this is a fix as in
 https://stackoverflow.com/questions/355967/how-to-use-msvc-intrinsics-to-get-the-equivalent-of-this-gcc-code/5468852#5468852
@@ -25,13 +24,12 @@ uint32_t __inline ctz(uint32_t value)
 #endif
 
 /* Template stuff */
-#define API_NS(_id) $(c_ns)_##_id
-#define SCALAR_BITS $(C_NS)_SCALAR_BITS
-#define SCALAR_SER_BYTES $(C_NS)_SCALAR_BYTES
-#define SCALAR_LIMBS $(C_NS)_SCALAR_LIMBS
-#define scalar_t API_NS(scalar_t)
-#define point_t API_NS(point_t)
-#define precomputed_s API_NS(precomputed_s)
+#define SCALAR_BITS RISTRETTO$(gf_bits)_SCALAR_BITS
+#define SCALAR_SER_BYTES RISTRETTO$(gf_bits)_SCALAR_BYTES
+#define SCALAR_LIMBS RISTRETTO$(gf_bits)_SCALAR_LIMBS
+#define scalar_t ristretto$(gf_bits)_scalar_t
+#define point_t ristretto$(gf_bits)_point_t
+#define precomputed_s ristretto$(gf_bits)_precomputed_s
 #define IMAGINE_TWIST $(imagine_twist)
 #define COFACTOR $(cofactor)
 
@@ -39,9 +37,9 @@ uint32_t __inline ctz(uint32_t value)
 #define COMBS_N $(combs.n)
 #define COMBS_T $(combs.t)
 #define COMBS_S $(combs.s)
-#define DECAF_WINDOW_BITS $(window_bits)
-#define DECAF_WNAF_FIXED_TABLE_BITS $(wnaf.fixed)
-#define DECAF_WNAF_VAR_TABLE_BITS $(wnaf.var)
+#define RISTRETTO_WINDOW_BITS $(window_bits)
+#define RISTRETTO_WNAF_FIXED_TABLE_BITS $(wnaf.fixed)
+#define RISTRETTO_WNAF_VAR_TABLE_BITS $(wnaf.var)
 
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 
@@ -52,7 +50,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
     $(ser((2**(combs.n*combs.t*combs.s) - 1) % q,64,"SC_LIMB"))
 }}};
 
-#define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
+#define RISTRETTO_FACTOR RISTRETTO$(gf_bits)_FACTOR
 const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
     $(ser(msqrt(d-1 if imagine_twist else -d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
 )};
@@ -70,6 +68,15 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
 #define EFF_D TWISTED_D
 #define NEG_D 0
 #endif
+
+/** Number of bytes in a Ristretto$(gf_bits) public key. */
+#define RISTRETTO$(gf_bits)_PUBLIC_BYTES $((gf_bits)//8 + 1)
+
+/** Number of bytes in an Ristretto$(gf_bits) private key. */
+#define RISTRETTO$(gf_bits)_PRIVATE_BYTES RISTRETTO$(gf_bits)_PUBLIC_BYTES
+
+/** Number of bytes in an Ristretto$(gf_bits) private key. */
+#define RISTRETTO$(gf_bits)_SIGNATURE_BYTES (RISTRETTO$(gf_bits)_PUBLIC_BYTES + RISTRETTO$(gf_bits)_PRIVATE_BYTES)
 
 /* End of template stuff */
 
@@ -95,9 +102,9 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
     extern const gf SQRT_MINUS_ONE;
 #endif
 
-#define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
+#define WBITS RISTRETTO_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
-extern const point_t API_NS(point_base);
+extern const point_t ristretto$(gf_bits)_point_base;
 
 /* Projective Niels coordinates */
 typedef struct { gf a, b, c; } niels_s, niels_t[1];
@@ -106,12 +113,12 @@ typedef struct { niels_t n; gf z; } VECTOR_ALIGNED pniels_s, pniels_t[1];
 /* Precomputed base */
 struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
 
-extern const gf API_NS(precomputed_base_as_fe)[];
-const precomputed_s *API_NS(precomputed_base) =
-    (const precomputed_s *) &API_NS(precomputed_base_as_fe);
+extern const gf ristretto$(gf_bits)_precomputed_base_as_fe[];
+const precomputed_s *ristretto$(gf_bits)_precomputed_base =
+    (const precomputed_s *) &ristretto$(gf_bits)_precomputed_base_as_fe;
 
-const size_t API_NS(sizeof_precomputed_s) = sizeof(precomputed_s);
-const size_t API_NS(alignof_precomputed_s) = sizeof(big_register_t);
+const size_t ristretto$(gf_bits)_sizeof_precomputed_s = sizeof(precomputed_s);
+const size_t ristretto$(gf_bits)_alignof_precomputed_s = sizeof(big_register_t);
 
 /** Inverse. */
 static void
@@ -127,10 +134,10 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 }
 
 /** identity = (0,1) */
-const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
+const point_t ristretto$(gf_bits)_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 /* Predeclare because not static: called by elligator */
-void API_NS(deisogenize) (
+void ristretto$(gf_bits)_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -140,7 +147,7 @@ void API_NS(deisogenize) (
     mask_t toggle_rotation
 );
 
-void API_NS(deisogenize) (
+void ristretto$(gf_bits)_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -228,16 +235,16 @@ void API_NS(deisogenize) (
 #endif
 }
 
-void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
+void ristretto$(gf_bits)_point_encode( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s,ie1,ie2;
-    API_NS(deisogenize)(s,ie1,ie2,p,0,0,0);
+    ristretto$(gf_bits)_deisogenize(s,ie1,ie2,p,0,0,0);
     gf_serialize(ser,s,1);
 }
 
-decaf_error_t API_NS(point_decode) (
+ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode (
     point_t p,
     const unsigned char ser[SER_BYTES],
-    decaf_bool_t allow_identity
+    ristretto$(gf_bits)_bool_t allow_identity
 ) {
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
@@ -283,11 +290,11 @@ decaf_error_t API_NS(point_decode) (
     gf_copy(p->z,ONE);
     gf_mul(p->t,p->x,p->y);
     
-    assert(API_NS(point_valid)(p) | ~succ);
-    return decaf_succeed_if(mask_to_bool(succ));
+    assert(ristretto$(gf_bits)_point_valid(p) | ~succ);
+    return ristretto$(gf_bits)_succeed_if(mask_to_bool(succ));
 }
 
-void API_NS(point_sub) (
+void ristretto$(gf_bits)_point_sub (
     point_t p,
     const point_t q,
     const point_t r
@@ -319,7 +326,7 @@ void API_NS(point_sub) (
     gf_mul ( p->t, b, c );
 }
     
-void API_NS(point_add) (
+void ristretto$(gf_bits)_point_add (
     point_t p,
     const point_t q,
     const point_t r
@@ -351,7 +358,7 @@ void API_NS(point_add) (
     gf_mul ( p->t, b, c );
 }
 
-static DECAF_NOINLINE void
+static RISTRETTO_NOINLINE void
 point_double_internal (
     point_t p,
     const point_t q,
@@ -375,11 +382,11 @@ point_double_internal (
     if (!before_double) gf_mul ( p->t, b, d );
 }
 
-void API_NS(point_double)(point_t p, const point_t q) {
+void ristretto$(gf_bits)_point_double(point_t p, const point_t q) {
     point_double_internal(p,q,0);
 }
 
-void API_NS(point_negate) (
+void ristretto$(gf_bits)_point_negate (
    point_t nega,
    const point_t a
 ) {
@@ -390,7 +397,7 @@ void API_NS(point_negate) (
 }
 
 /* Operations on [p]niels */
-static DECAF_INLINE void
+static RISTRETTO_INLINE void
 cond_neg_niels (
     niels_t n,
     mask_t neg
@@ -399,7 +406,7 @@ cond_neg_niels (
     gf_cond_neg(n->c, neg);
 }
 
-static DECAF_NOINLINE void pt_to_pniels (
+static RISTRETTO_NOINLINE void pt_to_pniels (
     pniels_t b,
     const point_t a
 ) {
@@ -409,7 +416,7 @@ static DECAF_NOINLINE void pt_to_pniels (
     gf_add ( b->z, a->z, a->z );
 }
 
-static DECAF_NOINLINE void pniels_to_pt (
+static RISTRETTO_NOINLINE void pniels_to_pt (
     point_t e,
     const pniels_t d
 ) {
@@ -422,7 +429,7 @@ static DECAF_NOINLINE void pniels_to_pt (
     gf_sqr ( e->z, d->z );
 }
 
-static DECAF_NOINLINE void
+static RISTRETTO_NOINLINE void
 niels_to_pt (
     point_t e,
     const niels_t n
@@ -433,7 +440,7 @@ niels_to_pt (
     gf_copy ( e->z, ONE );
 }
 
-static DECAF_NOINLINE void
+static RISTRETTO_NOINLINE void
 add_niels_to_pt (
     point_t d,
     const niels_t e,
@@ -455,7 +462,7 @@ add_niels_to_pt (
     if (!before_double) gf_mul ( d->t, b, c );
 }
 
-static DECAF_NOINLINE void
+static RISTRETTO_NOINLINE void
 sub_niels_from_pt (
     point_t d,
     const niels_t e,
@@ -501,7 +508,7 @@ sub_pniels_from_pt (
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
-static DECAF_NOINLINE void
+static RISTRETTO_NOINLINE void
 prepare_fixed_window(
     pniels_t *multiples,
     const point_t b,
@@ -514,33 +521,33 @@ prepare_fixed_window(
     point_double_internal(tmp, b, 0);
     pt_to_pniels(pn, tmp);
     pt_to_pniels(multiples[0], b);
-    API_NS(point_copy)(tmp, b);
+    ristretto$(gf_bits)_point_copy(tmp, b);
     for (i=1; i<ntable; i++) {
         add_pniels_to_pt(tmp, pn, 0);
         pt_to_pniels(multiples[i], tmp);
     }
     
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(tmp,sizeof(tmp));
+    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
+    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
 }
 
-void API_NS(point_scalarmul) (
+void ristretto$(gf_bits)_point_scalarmul (
     point_t a,
     const point_t b,
     const scalar_t scalar
 ) {
 
-    const int WINDOW = DECAF_WINDOW_BITS,
+    const int WINDOW = RISTRETTO_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
         
     scalar_t scalar1x;
-    API_NS(scalar_add)(scalar1x, scalar, point_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar1x,scalar1x);
+    ristretto$(gf_bits)_scalar_add(scalar1x, scalar, point_scalarmul_adjustment);
+    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
     
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_t pn, multiples[1<<((int)(DECAF_WINDOW_BITS)-1)];  // == NTABLE (MSVC compatibility issue)
+    pniels_t pn, multiples[1<<((int)(RISTRETTO_WINDOW_BITS)-1)];  // == NTABLE (MSVC compatibility issue)
     point_t tmp;
     prepare_fixed_window(multiples, b, NTABLE);
 
@@ -577,15 +584,15 @@ void API_NS(point_scalarmul) (
     }
     
     /* Write out the answer */
-    API_NS(point_copy)(a,tmp);
+    ristretto$(gf_bits)_point_copy(a,tmp);
     
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples,sizeof(multiples));
-    decaf_bzero(tmp,sizeof(tmp));
+    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
+    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
+    ristretto$(gf_bits)_bzero(multiples,sizeof(multiples));
+    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
 }
 
-void API_NS(point_double_scalarmul) (
+void ristretto$(gf_bits)_point_double_scalarmul (
     point_t a,
     const point_t b,
     const scalar_t scalarb,
@@ -593,19 +600,19 @@ void API_NS(point_double_scalarmul) (
     const scalar_t scalarc
 ) {    
     
-    const int WINDOW = DECAF_WINDOW_BITS,
+    const int WINDOW = RISTRETTO_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
 
     scalar_t scalar1x, scalar2x;
-    API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar1x,scalar1x);
-    API_NS(scalar_add)(scalar2x, scalarc, point_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar2x,scalar2x);
+    ristretto$(gf_bits)_scalar_add(scalar1x, scalarb, point_scalarmul_adjustment);
+    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
+    ristretto$(gf_bits)_scalar_add(scalar2x, scalarc, point_scalarmul_adjustment);
+    ristretto$(gf_bits)_scalar_halve(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_t pn, multiples1[1<<((int)(DECAF_WINDOW_BITS)-1)], multiples2[1<<((int)(DECAF_WINDOW_BITS)-1)];
+    pniels_t pn, multiples1[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], multiples2[1<<((int)(RISTRETTO_WINDOW_BITS)-1)];
     // Array size above equal NTABLE (MSVC compatibility issue)
     point_t tmp;
     prepare_fixed_window(multiples1, b, NTABLE);  
@@ -652,18 +659,18 @@ void API_NS(point_double_scalarmul) (
     }
     
     /* Write out the answer */
-    API_NS(point_copy)(a,tmp);
+    ristretto$(gf_bits)_point_copy(a,tmp);
     
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(scalar2x,sizeof(scalar2x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples1,sizeof(multiples1));
-    decaf_bzero(multiples2,sizeof(multiples2));
-    decaf_bzero(tmp,sizeof(tmp));
+    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
+    ristretto$(gf_bits)_bzero(scalar2x,sizeof(scalar2x));
+    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
+    ristretto$(gf_bits)_bzero(multiples1,sizeof(multiples1));
+    ristretto$(gf_bits)_bzero(multiples2,sizeof(multiples2));
+    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
 }
 
-void API_NS(point_dual_scalarmul) (
+void ristretto$(gf_bits)_point_dual_scalarmul (
     point_t a1,
     point_t a2,
     const point_t b,
@@ -671,32 +678,32 @@ void API_NS(point_dual_scalarmul) (
     const scalar_t scalar2
 ) {
     
-    const int WINDOW = DECAF_WINDOW_BITS,
+    const int WINDOW = RISTRETTO_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
 
 
     scalar_t scalar1x, scalar2x;
-    API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar1x,scalar1x);
-    API_NS(scalar_add)(scalar2x, scalar2, point_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar2x,scalar2x);
+    ristretto$(gf_bits)_scalar_add(scalar1x, scalar1, point_scalarmul_adjustment);
+    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
+    ristretto$(gf_bits)_scalar_add(scalar2x, scalar2, point_scalarmul_adjustment);
+    ristretto$(gf_bits)_scalar_halve(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
-    point_t multiples1[1<<((int)(DECAF_WINDOW_BITS)-1)], multiples2[1<<((int)(DECAF_WINDOW_BITS)-1)], working, tmp;
+    point_t multiples1[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], multiples2[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], working, tmp;
     // Array sizes above equal NTABLE (MSVC compatibility issue)
 
     pniels_t pn;
     
-    API_NS(point_copy)(working, b);
+    ristretto$(gf_bits)_point_copy(working, b);
 
     /* Initialize. */
     int i,j;
     
     for (i=0; i<NTABLE; i++) {
-        API_NS(point_copy)(multiples1[i], API_NS(point_identity));
-        API_NS(point_copy)(multiples2[i], API_NS(point_identity));
+        ristretto$(gf_bits)_point_copy(multiples1[i], ristretto$(gf_bits)_point_identity);
+        ristretto$(gf_bits)_point_copy(multiples2[i], ristretto$(gf_bits)_point_identity);
     }
 
     for (i=0; i<SCALAR_BITS; i+=WINDOW) {   
@@ -737,37 +744,37 @@ void API_NS(point_dual_scalarmul) (
     }
     
     if (NTABLE > 1) {
-        API_NS(point_copy)(working, multiples1[NTABLE-1]);
-        API_NS(point_copy)(tmp    , multiples2[NTABLE-1]);
+        ristretto$(gf_bits)_point_copy(working, multiples1[NTABLE-1]);
+        ristretto$(gf_bits)_point_copy(tmp    , multiples2[NTABLE-1]);
     
         for (i=NTABLE-1; i>1; i--) {
-            API_NS(point_add)(multiples1[i-1], multiples1[i-1], multiples1[i]);
-            API_NS(point_add)(multiples2[i-1], multiples2[i-1], multiples2[i]);
-            API_NS(point_add)(working, working, multiples1[i-1]);
-            API_NS(point_add)(tmp,     tmp,     multiples2[i-1]);
+            ristretto$(gf_bits)_point_add(multiples1[i-1], multiples1[i-1], multiples1[i]);
+            ristretto$(gf_bits)_point_add(multiples2[i-1], multiples2[i-1], multiples2[i]);
+            ristretto$(gf_bits)_point_add(working, working, multiples1[i-1]);
+            ristretto$(gf_bits)_point_add(tmp,     tmp,     multiples2[i-1]);
         }
     
-        API_NS(point_add)(multiples1[0], multiples1[0], multiples1[1]);
-        API_NS(point_add)(multiples2[0], multiples2[0], multiples2[1]);
+        ristretto$(gf_bits)_point_add(multiples1[0], multiples1[0], multiples1[1]);
+        ristretto$(gf_bits)_point_add(multiples2[0], multiples2[0], multiples2[1]);
         point_double_internal(working, working, 0);
         point_double_internal(tmp,         tmp, 0);
-        API_NS(point_add)(a1, working, multiples1[0]);
-        API_NS(point_add)(a2, tmp,     multiples2[0]);
+        ristretto$(gf_bits)_point_add(a1, working, multiples1[0]);
+        ristretto$(gf_bits)_point_add(a2, tmp,     multiples2[0]);
     } else {
-        API_NS(point_copy)(a1, multiples1[0]);
-        API_NS(point_copy)(a2, multiples2[0]);
+        ristretto$(gf_bits)_point_copy(a1, multiples1[0]);
+        ristretto$(gf_bits)_point_copy(a2, multiples2[0]);
     }
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(scalar2x,sizeof(scalar2x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples1,sizeof(multiples1));
-    decaf_bzero(multiples2,sizeof(multiples2));
-    decaf_bzero(tmp,sizeof(tmp));
-    decaf_bzero(working,sizeof(working));
+    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
+    ristretto$(gf_bits)_bzero(scalar2x,sizeof(scalar2x));
+    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
+    ristretto$(gf_bits)_bzero(multiples1,sizeof(multiples1));
+    ristretto$(gf_bits)_bzero(multiples2,sizeof(multiples2));
+    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
+    ristretto$(gf_bits)_bzero(working,sizeof(working));
 }
 
-decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
+ristretto$(gf_bits)_bool_t ristretto$(gf_bits)_point_eq ( const point_t p, const point_t q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
@@ -793,7 +800,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     return mask_to_bool(succ);
 }
 
-decaf_bool_t API_NS(point_valid) (
+ristretto$(gf_bits)_bool_t ristretto$(gf_bits)_point_valid (
     const point_t p
 ) {
     gf a,b,c;
@@ -812,7 +819,7 @@ decaf_bool_t API_NS(point_valid) (
     return mask_to_bool(out);
 }
 
-void API_NS(point_debugging_torque) (
+void ristretto$(gf_bits)_point_debugging_torque (
     point_t q,
     const point_t p
 ) {
@@ -831,7 +838,7 @@ void API_NS(point_debugging_torque) (
 #endif
 }
 
-void API_NS(point_debugging_pscale) (
+void ristretto$(gf_bits)_point_debugging_pscale (
     point_t q,
     const point_t p,
     const uint8_t factor[SER_BYTES]
@@ -899,10 +906,10 @@ static void batch_normalize_niels (
         gf_copy(table[i]->c, product);
     }
     
-    decaf_bzero(product,sizeof(product));
+    ristretto$(gf_bits)_bzero(product,sizeof(product));
 }
 
-void API_NS(precompute) (
+void ristretto$(gf_bits)_precompute (
     precomputed_s *table,
     const point_t base
 ) { 
@@ -910,7 +917,7 @@ void API_NS(precompute) (
     assert(n*t*s >= SCALAR_BITS);
   
     point_t working, start, doubles[COMBS_T-1];
-    API_NS(point_copy)(working, base);
+    ristretto$(gf_bits)_point_copy(working, base);
     pniels_t pn_tmp;
   
     gf zs[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)], zis[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)];
@@ -922,13 +929,13 @@ void API_NS(precompute) (
 
         /* Doubling phase */
         for (j=0; j<t; j++) {
-            if (j) API_NS(point_add)(start, start, working);
-            else API_NS(point_copy)(start, working);
+            if (j) ristretto$(gf_bits)_point_add(start, start, working);
+            else ristretto$(gf_bits)_point_copy(start, working);
 
             if (j==t-1 && i==n-1) break;
 
             point_double_internal(working, working,0);
-            if (j<t-1) API_NS(point_copy)(doubles[j], working);
+            if (j<t-1) ristretto$(gf_bits)_point_copy(doubles[j], working);
 
             for (k=0; k<s-1; k++)
                 point_double_internal(working, working, k<s-2);
@@ -950,24 +957,24 @@ void API_NS(precompute) (
                 delta >>=1;
             
             if (gray & (1<<k)) {
-                API_NS(point_add)(start, start, doubles[k]);
+                ristretto$(gf_bits)_point_add(start, start, doubles[k]);
             } else {
-                API_NS(point_sub)(start, start, doubles[k]);
+                ristretto$(gf_bits)_point_sub(start, start, doubles[k]);
             }
         }
     }
     
     batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
     
-    decaf_bzero(zs,sizeof(zs));
-    decaf_bzero(zis,sizeof(zis));
-    decaf_bzero(pn_tmp,sizeof(pn_tmp));
-    decaf_bzero(working,sizeof(working));
-    decaf_bzero(start,sizeof(start));
-    decaf_bzero(doubles,sizeof(doubles));
+    ristretto$(gf_bits)_bzero(zs,sizeof(zs));
+    ristretto$(gf_bits)_bzero(zis,sizeof(zis));
+    ristretto$(gf_bits)_bzero(pn_tmp,sizeof(pn_tmp));
+    ristretto$(gf_bits)_bzero(working,sizeof(working));
+    ristretto$(gf_bits)_bzero(start,sizeof(start));
+    ristretto$(gf_bits)_bzero(doubles,sizeof(doubles));
 }
 
-static DECAF_INLINE void
+static RISTRETTO_INLINE void
 constant_time_lookup_niels (
     niels_s *__restrict__ ni,
     const niels_t *table,
@@ -977,7 +984,7 @@ constant_time_lookup_niels (
     constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
 }
 
-void API_NS(precomputed_scalarmul) (
+void ristretto$(gf_bits)_precomputed_scalarmul (
     point_t out,
     const precomputed_s *table,
     const scalar_t scalar
@@ -987,8 +994,8 @@ void API_NS(precomputed_scalarmul) (
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     
     scalar_t scalar1x;
-    API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar1x,scalar1x);
+    ristretto$(gf_bits)_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
+    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
     
     niels_t ni;
     
@@ -1020,39 +1027,39 @@ void API_NS(precomputed_scalarmul) (
         }
     }
     
-    decaf_bzero(ni,sizeof(ni));
-    decaf_bzero(scalar1x,sizeof(scalar1x));
+    ristretto$(gf_bits)_bzero(ni,sizeof(ni));
+    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
 }
 
-void API_NS(point_cond_sel) (
+void ristretto$(gf_bits)_point_cond_sel (
     point_t out,
     const point_t a,
     const point_t b,
-    decaf_bool_t pick_b
+    ristretto$(gf_bits)_bool_t pick_b
 ) {
     constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
 }
 
 /* FUTURE: restore Curve25519 Montgomery ladder? */
-decaf_error_t API_NS(direct_scalarmul) (
+ristretto$(gf_bits)_error_t ristretto$(gf_bits)_direct_scalarmul (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
     const scalar_t scalar,
-    decaf_bool_t allow_identity,
-    decaf_bool_t short_circuit
+    ristretto$(gf_bits)_bool_t allow_identity,
+    ristretto$(gf_bits)_bool_t short_circuit
 ) {
     point_t basep;
-    decaf_error_t succ = API_NS(point_decode)(basep, base, allow_identity);
-    if (short_circuit && succ != DECAF_SUCCESS) return succ;
-    API_NS(point_cond_sel)(basep, API_NS(point_base), basep, succ);
-    API_NS(point_scalarmul)(basep, basep, scalar);
-    API_NS(point_encode)(scaled, basep);
-    API_NS(point_destroy)(basep);
+    ristretto$(gf_bits)_error_t succ = ristretto$(gf_bits)_point_decode(basep, base, allow_identity);
+    if (short_circuit && succ != RISTRETTO_SUCCESS) return succ;
+    ristretto$(gf_bits)_point_cond_sel(basep, ristretto$(gf_bits)_point_base, basep, succ);
+    ristretto$(gf_bits)_point_scalarmul(basep, basep, scalar);
+    ristretto$(gf_bits)_point_encode(scaled, basep);
+    ristretto$(gf_bits)_point_destroy(basep);
     return succ;
 }
 
-void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
-    uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+void ristretto$(gf_bits)_point_mul_by_ratio_and_encode_like_eddsa (
+    uint8_t enc[RISTRETTO$(gf_bits)_PUBLIC_BYTES],
     const point_t p
 ) {
     
@@ -1060,9 +1067,9 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf x, y, z, t;
     point_t q;
 #if COFACTOR == 8
-    API_NS(point_double)(q,p);
+    ristretto$(gf_bits)_point_double(q,p);
 #else
-    API_NS(point_copy)(q,p);
+    ristretto$(gf_bits)_point_copy(q,p);
 #endif
     
 #if EDDSA_USE_SIGMA_ISOGENY
@@ -1096,12 +1103,12 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
 #error "... probably wrong"
         gf_copy( x, u );
 #endif
-        decaf_bzero(u,sizeof(u));
+        ristretto$(gf_bits)_bzero(u,sizeof(u));
     }
 #elif IMAGINE_TWIST
     {
-        API_NS(point_double)(q,q);
-        API_NS(point_double)(q,q);
+        ristretto$(gf_bits)_point_double(q,q);
+        ristretto$(gf_bits)_point_double(q,q);
         gf_mul_i(x, q->x);
         gf_copy(y, q->y);
         gf_copy(z, q->z);
@@ -1123,7 +1130,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
         gf_mul ( x, t, y );
         gf_mul ( y, z, u );
         gf_mul ( z, u, t );
-        decaf_bzero(u,sizeof(u));
+        ristretto$(gf_bits)_bzero(u,sizeof(u));
     }
 #endif
     /* Affinize */
@@ -1132,31 +1139,31 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_mul(x,y,z);
     
     /* Encode */
-    enc[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] = 0;
+    enc[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
-    enc[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
+    enc[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
-    decaf_bzero(x,sizeof(x));
-    decaf_bzero(y,sizeof(y));
-    decaf_bzero(z,sizeof(z));
-    decaf_bzero(t,sizeof(t));
-    API_NS(point_destroy)(q);
+    ristretto$(gf_bits)_bzero(x,sizeof(x));
+    ristretto$(gf_bits)_bzero(y,sizeof(y));
+    ristretto$(gf_bits)_bzero(z,sizeof(z));
+    ristretto$(gf_bits)_bzero(t,sizeof(t));
+    ristretto$(gf_bits)_point_destroy(q);
 }
 
 
-decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
+ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode_like_eddsa_and_mul_by_ratio (
     point_t p,
-    const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+    const uint8_t enc[RISTRETTO$(gf_bits)_PUBLIC_BYTES]
 ) {
-    uint8_t enc2[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES];
+    uint8_t enc2[RISTRETTO$(gf_bits)_PUBLIC_BYTES];
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] & 0x80);
-    enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] &= ~0x80;
+    mask_t low = ~word_is_zero(enc2[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] & 0x80);
+    enc2[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] &= ~0x80;
     
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
 #if $(gf_bits % 8) == 0
-    succ &= word_is_zero(enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1]);
+    succ &= word_is_zero(enc2[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1]);
 #endif
 
     gf_sqr(p->x,p->y);
@@ -1206,10 +1213,10 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->t, d, b );
-        decaf_bzero(a,sizeof(a));
-        decaf_bzero(b,sizeof(b));
-        decaf_bzero(c,sizeof(c));
-        decaf_bzero(d,sizeof(d));
+        ristretto$(gf_bits)_bzero(a,sizeof(a));
+        ristretto$(gf_bits)_bzero(b,sizeof(b));
+        ristretto$(gf_bits)_bzero(c,sizeof(c));
+        ristretto$(gf_bits)_bzero(d,sizeof(d));
     } 
     #elif IMAGINE_TWIST
     {
@@ -1235,17 +1242,17 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         gf_mul ( p->z, p->t, a );
         gf_mul ( p->y, p->t, d );
         gf_mul ( p->t, b, d );
-        decaf_bzero(a,sizeof(a));
-        decaf_bzero(b,sizeof(b));
-        decaf_bzero(c,sizeof(c));
-        decaf_bzero(d,sizeof(d));
+        ristretto$(gf_bits)_bzero(a,sizeof(a));
+        ristretto$(gf_bits)_bzero(b,sizeof(b));
+        ristretto$(gf_bits)_bzero(c,sizeof(c));
+        ristretto$(gf_bits)_bzero(d,sizeof(d));
     }
     #endif
     
-    decaf_bzero(enc2,sizeof(enc2));
-    assert(API_NS(point_valid)(p) || ~succ);
+    ristretto$(gf_bits)_bzero(enc2,sizeof(enc2));
+    assert(ristretto$(gf_bits)_point_valid(p) || ~succ);
     
-    return decaf_succeed_if(mask_to_bool(succ));
+    return ristretto$(gf_bits)_succeed_if(mask_to_bool(succ));
 }
 
 /**
@@ -1320,7 +1327,7 @@ prepare_wnaf_table(
 
     if (tbits == 0) return;
 
-    API_NS(point_double)(tmp,working);
+    ristretto$(gf_bits)_point_double(tmp,working);
     pniels_t twop;
     pt_to_pniels(twop, tmp);
 
@@ -1332,71 +1339,71 @@ prepare_wnaf_table(
         pt_to_pniels(output[i], tmp);
     }
     
-    API_NS(point_destroy)(tmp);
-    decaf_bzero(twop,sizeof(twop));
+    ristretto$(gf_bits)_point_destroy(tmp);
+    ristretto$(gf_bits)_bzero(twop,sizeof(twop));
 }
 
-extern const gf API_NS(precomputed_wnaf_as_fe)[];
-static const niels_t *API_NS(wnaf_base) = (const niels_t *)API_NS(precomputed_wnaf_as_fe);
-const size_t API_NS(sizeof_precomputed_wnafs) __attribute((visibility("hidden")))
-    = sizeof(niels_t)<<DECAF_WNAF_FIXED_TABLE_BITS;
+extern const gf ristretto$(gf_bits)_precomputed_wnaf_as_fe[];
+static const niels_t *ristretto$(gf_bits)_wnaf_base = (const niels_t *)ristretto$(gf_bits)_precomputed_wnaf_as_fe;
+const size_t ristretto$(gf_bits)_sizeof_precomputed_wnafs __attribute((visibility("hidden")))
+    = sizeof(niels_t)<<RISTRETTO_WNAF_FIXED_TABLE_BITS;
 
-void API_NS(precompute_wnafs) (
-    niels_t out[1<<DECAF_WNAF_FIXED_TABLE_BITS],
+void ristretto$(gf_bits)_precompute_wnafs (
+    niels_t out[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS],
     const point_t base
 ) __attribute__ ((visibility ("hidden")));
 
-void API_NS(precompute_wnafs) (
-    niels_t out[1<<DECAF_WNAF_FIXED_TABLE_BITS],
+void ristretto$(gf_bits)_precompute_wnafs (
+    niels_t out[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS],
     const point_t base
 ) {
-    pniels_t tmp[1<<DECAF_WNAF_FIXED_TABLE_BITS];
-    gf zs[1<<DECAF_WNAF_FIXED_TABLE_BITS], zis[1<<DECAF_WNAF_FIXED_TABLE_BITS];
+    pniels_t tmp[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS];
+    gf zs[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS], zis[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS];
     int i;
-    prepare_wnaf_table(tmp,base,DECAF_WNAF_FIXED_TABLE_BITS);
-    for (i=0; i<1<<DECAF_WNAF_FIXED_TABLE_BITS; i++) {
+    prepare_wnaf_table(tmp,base,RISTRETTO_WNAF_FIXED_TABLE_BITS);
+    for (i=0; i<1<<RISTRETTO_WNAF_FIXED_TABLE_BITS; i++) {
         memcpy(out[i], tmp[i]->n, sizeof(niels_t));
         gf_copy(zs[i], tmp[i]->z);
     }
-    batch_normalize_niels(out, (const gf *)zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
+    batch_normalize_niels(out, (const gf *)zs, zis, 1<<RISTRETTO_WNAF_FIXED_TABLE_BITS);
     
-    decaf_bzero(tmp,sizeof(tmp));
-    decaf_bzero(zs,sizeof(zs));
-    decaf_bzero(zis,sizeof(zis));
+    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
+    ristretto$(gf_bits)_bzero(zs,sizeof(zs));
+    ristretto$(gf_bits)_bzero(zis,sizeof(zis));
 }
 
-void API_NS(base_double_scalarmul_non_secret) (
+void ristretto$(gf_bits)_base_double_scalarmul_non_secret (
     point_t combo,
     const scalar_t scalar1,
     const point_t base2,
     const scalar_t scalar2
 ) {
-    const int table_bits_var = DECAF_WNAF_VAR_TABLE_BITS,
-        table_bits_pre = DECAF_WNAF_FIXED_TABLE_BITS;
-    struct smvt_control control_var[SCALAR_BITS/((int)(DECAF_WNAF_VAR_TABLE_BITS)+1)+3];
-    struct smvt_control control_pre[SCALAR_BITS/((int)(DECAF_WNAF_FIXED_TABLE_BITS)+1)+3];
+    const int table_bits_var = RISTRETTO_WNAF_VAR_TABLE_BITS,
+        table_bits_pre = RISTRETTO_WNAF_FIXED_TABLE_BITS;
+    struct smvt_control control_var[SCALAR_BITS/((int)(RISTRETTO_WNAF_VAR_TABLE_BITS)+1)+3];
+    struct smvt_control control_pre[SCALAR_BITS/((int)(RISTRETTO_WNAF_FIXED_TABLE_BITS)+1)+3];
     
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
   
-    pniels_t precmp_var[1<<(int)(DECAF_WNAF_VAR_TABLE_BITS)];
+    pniels_t precmp_var[1<<(int)(RISTRETTO_WNAF_VAR_TABLE_BITS)];
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
   
     int contp=0, contv=0, i = control_var[0].power;
 
     if (i < 0) {
-        API_NS(point_copy)(combo, API_NS(point_identity));
+        ristretto$(gf_bits)_point_copy(combo, ristretto$(gf_bits)_point_identity);
         return;
     } else if (i > control_pre[0].power) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
         contv++;
     } else if (i == control_pre[0].power && i >=0 ) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
-        add_niels_to_pt(combo, API_NS(wnaf_base)[control_pre[0].addend >> 1], i);
+        add_niels_to_pt(combo, ristretto$(gf_bits)_wnaf_base[control_pre[0].addend >> 1], i);
         contv++; contp++;
     } else {
         i = control_pre[0].power;
-        niels_to_pt(combo, API_NS(wnaf_base)[control_pre[0].addend >> 1]);
+        niels_to_pt(combo, ristretto$(gf_bits)_wnaf_base[control_pre[0].addend >> 1]);
         contp++;
     }
     
@@ -1419,31 +1426,31 @@ void API_NS(base_double_scalarmul_non_secret) (
             assert(control_pre[contp].addend);
 
             if (control_pre[contp].addend > 0) {
-                add_niels_to_pt(combo, API_NS(wnaf_base)[control_pre[contp].addend >> 1], i);
+                add_niels_to_pt(combo, ristretto$(gf_bits)_wnaf_base[control_pre[contp].addend >> 1], i);
             } else {
-                sub_niels_from_pt(combo, API_NS(wnaf_base)[(-control_pre[contp].addend) >> 1], i);
+                sub_niels_from_pt(combo, ristretto$(gf_bits)_wnaf_base[(-control_pre[contp].addend) >> 1], i);
             }
             contp++;
         }
     }
     
     /* This function is non-secret, but whatever this is cheap. */
-    decaf_bzero(control_var,sizeof(control_var));
-    decaf_bzero(control_pre,sizeof(control_pre));
-    decaf_bzero(precmp_var,sizeof(precmp_var));
+    ristretto$(gf_bits)_bzero(control_var,sizeof(control_var));
+    ristretto$(gf_bits)_bzero(control_pre,sizeof(control_pre));
+    ristretto$(gf_bits)_bzero(precmp_var,sizeof(precmp_var));
 
     assert(contv == ncb_var); (void)ncb_var;
     assert(contp == ncb_pre); (void)ncb_pre;
 }
 
-void API_NS(point_destroy) (
+void ristretto$(gf_bits)_point_destroy (
     point_t point
 ) {
-    decaf_bzero(point, sizeof(point_t));
+    ristretto$(gf_bits)_bzero(point, sizeof(point_t));
 }
 
-void API_NS(precomputed_destroy) (
+void ristretto$(gf_bits)_precomputed_destroy (
     precomputed_s *pre
 ) {
-    decaf_bzero(pre, API_NS(sizeof_precomputed_s));
+    ristretto$(gf_bits)_bzero(pre, ristretto$(gf_bits)_sizeof_precomputed_s);
 }

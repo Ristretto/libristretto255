@@ -2,20 +2,20 @@
 
 #include "word.h"
 #include "field.h"
-#include <decaf.h>
+#include <ristretto$(gf_bits)/common.h>
+#include <ristretto$(gf_bits)/point.h>
 
 /* Template stuff */
-#define API_NS(_id) $(c_ns)_##_id
-#define point_t API_NS(point_t)
+#define point_t ristretto$(gf_bits)_point_t
 #define IMAGINE_TWIST $(imagine_twist)
 #define COFACTOR $(cofactor)
 static const int EDWARDS_D = $(d);
 
-#define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
+#define RISTRETTO_FACTOR RISTRETTO$(gf_bits)_FACTOR
 extern const gf RISTRETTO_FACTOR;
 
 /* End of template stuff */
-extern mask_t API_NS(deisogenize) (
+extern mask_t ristretto$(gf_bits)_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -25,7 +25,7 @@ extern mask_t API_NS(deisogenize) (
     mask_t toggle_rotation
 );
 
-void API_NS(point_from_hash_nonuniform) (
+void ristretto$(gf_bits)_point_from_hash_nonuniform (
     point_t p,
     const unsigned char ser[SER_BYTES]
 ) {
@@ -81,17 +81,17 @@ void API_NS(point_from_hash_nonuniform) (
     gf_mul(p->y,e,a); /* (1+s^2)(1-s^2) */
     gf_mul(p->z,a,b); /* (1-s^2)t */
     
-    assert(API_NS(point_valid)(p));
+    assert(ristretto$(gf_bits)_point_valid(p));
 }
 
-void API_NS(point_from_hash_uniform) (
+void ristretto$(gf_bits)_point_from_hash_uniform (
     point_t pt,
     const unsigned char hashed_data[2*SER_BYTES]
 ) {
     point_t pt2;
-    API_NS(point_from_hash_nonuniform)(pt,hashed_data);
-    API_NS(point_from_hash_nonuniform)(pt2,&hashed_data[SER_BYTES]);
-    API_NS(point_add)(pt,pt,pt2);
+    ristretto$(gf_bits)_point_from_hash_nonuniform(pt,hashed_data);
+    ristretto$(gf_bits)_point_from_hash_nonuniform(pt2,&hashed_data[SER_BYTES]);
+    ristretto$(gf_bits)_point_add(pt,pt,pt2);
 }
 
 /* Elligator_onto:
@@ -102,8 +102,8 @@ void API_NS(point_from_hash_uniform) (
  */
 #define MAX(A,B) (((A)>(B)) ? (A) : (B))
 
-decaf_error_t
-API_NS(invert_elligator_nonuniform) (
+ristretto$(gf_bits)_error_t
+ristretto$(gf_bits)_invert_elligator_nonuniform (
     unsigned char recovered_hash[SER_BYTES],
     const point_t p,
     uint32_t hint_
@@ -117,7 +117,7 @@ API_NS(invert_elligator_nonuniform) (
          */
         sgn_ed_T = -(hint>>3 & 1);
     gf a,b,c;
-    API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
+    ristretto$(gf_bits)_deisogenize(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
     
     mask_t is_identity = gf_eq(p->t,ZERO);
 #if COFACTOR==4
@@ -177,17 +177,17 @@ API_NS(invert_elligator_nonuniform) (
         recovered_hash[SER_BYTES-1] ^= (hint>>3)<<$(gf_bits%8);
     #endif
 #endif
-    return decaf_succeed_if(mask_to_bool(succ));
+    return ristretto$(gf_bits)_succeed_if(mask_to_bool(succ));
 }
 
-decaf_error_t
-API_NS(invert_elligator_uniform) (
+ristretto$(gf_bits)_error_t
+ristretto$(gf_bits)_invert_elligator_uniform (
     unsigned char partial_hash[2*SER_BYTES],
     const point_t p,
     uint32_t hint
 ) {
     point_t pt2;
-    API_NS(point_from_hash_nonuniform)(pt2,&partial_hash[SER_BYTES]);
-    API_NS(point_sub)(pt2,p,pt2);
-    return API_NS(invert_elligator_nonuniform)(partial_hash,pt2,hint);
+    ristretto$(gf_bits)_point_from_hash_nonuniform(pt2,&partial_hash[SER_BYTES]);
+    ristretto$(gf_bits)_point_sub(pt2,p,pt2);
+    return ristretto$(gf_bits)_invert_elligator_nonuniform(partial_hash,pt2,hint);
 }
