@@ -25,7 +25,7 @@ WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 
 INCFLAGS  = -Iinclude -Isrc -Isrc/arch/$(ARCH)
 LANGFLAGS = -std=c99 -fno-strict-aliasing
-GENFLAGS  = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
+GENFLAGS  = -ffunction-sections -fdata-sections -fomit-frame-pointer -fPIC
 OFLAGS   ?= -O2
 
 MACOSX_VERSION_MIN ?= 10.9
