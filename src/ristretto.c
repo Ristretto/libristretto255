@@ -1,10 +1,21 @@
-/** @brief Ristretto$(gf_bits) high-level functions. */
-
+/**
+ * @file curve25519/ristretto.c
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief Ristretto255 high-level functions.
+ *
+ * @warning This file was automatically generated in Python.
+ * Please do not edit it.
+ */
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include "word.h"
 #include "field.h"
 
-#include <ristretto$(gf_bits).h>
+#include <ristretto255.h>
 
 /* MSVC has no builtint ctz, this is a fix as in
 https://stackoverflow.com/questions/355967/how-to-use-msvc-intrinsics-to-get-the-equivalent-of-this-gcc-code/5468852#5468852
@@ -24,35 +35,35 @@ uint32_t __inline ctz(uint32_t value)
 #endif
 
 /* Template stuff */
-#define SCALAR_BITS RISTRETTO$(gf_bits)_SCALAR_BITS
-#define SCALAR_SER_BYTES RISTRETTO$(gf_bits)_SCALAR_BYTES
-#define SCALAR_LIMBS RISTRETTO$(gf_bits)_SCALAR_LIMBS
-#define scalar_t ristretto$(gf_bits)_scalar_t
-#define point_t ristretto$(gf_bits)_point_t
-#define precomputed_s ristretto$(gf_bits)_precomputed_s
-#define IMAGINE_TWIST $(imagine_twist)
-#define COFACTOR $(cofactor)
+#define SCALAR_BITS RISTRETTO255_SCALAR_BITS
+#define SCALAR_SER_BYTES RISTRETTO255_SCALAR_BYTES
+#define SCALAR_LIMBS RISTRETTO255_SCALAR_LIMBS
+#define scalar_t ristretto255_scalar_t
+#define point_t ristretto255_point_t
+#define precomputed_s ristretto255_precomputed_s
+#define IMAGINE_TWIST 1
+#define COFACTOR 8
 
 /* Comb config: number of combs, n, t, s. */
-#define COMBS_N $(combs.n)
-#define COMBS_T $(combs.t)
-#define COMBS_S $(combs.s)
-#define RISTRETTO_WINDOW_BITS $(window_bits)
-#define RISTRETTO_WNAF_FIXED_TABLE_BITS $(wnaf.fixed)
-#define RISTRETTO_WNAF_VAR_TABLE_BITS $(wnaf.var)
+#define COMBS_N 3
+#define COMBS_T 5
+#define COMBS_S 17
+#define RISTRETTO_WINDOW_BITS 4
+#define RISTRETTO_WNAF_FIXED_TABLE_BITS 5
+#define RISTRETTO_WNAF_VAR_TABLE_BITS 3
 
-#define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
+#define EDDSA_USE_SIGMA_ISOGENY 1
 
-static const int EDWARDS_D = $(d);
+static const int EDWARDS_D = -121665;
 static const scalar_t point_scalarmul_adjustment = {{{
-    $(ser((2**(scalar_bits-1+window_bits - ((scalar_bits-1)%window_bits)) - 1) % q,64,"SC_LIMB"))
+    SC_LIMB(0xd6ec31748d98951c), SC_LIMB(0xc6ef5bf4737dcf70), SC_LIMB(0xfffffffffffffffe), SC_LIMB(0x0fffffffffffffff)
 }}}, precomputed_scalarmul_adjustment = {{{
-    $(ser((2**(combs.n*combs.t*combs.s) - 1) % q,64,"SC_LIMB"))
+    SC_LIMB(0x977f4a4775473484), SC_LIMB(0x6de72ae98b3ab623), SC_LIMB(0xffffffffffffffff), SC_LIMB(0x0fffffffffffffff)
 }}};
 
-#define RISTRETTO_FACTOR RISTRETTO$(gf_bits)_FACTOR
+#define RISTRETTO_FACTOR RISTRETTO255_FACTOR
 const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
-    $(ser(msqrt(d-1 if imagine_twist else -d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
+    0x702557fa2bf03, 0x514b7d1a82cc6, 0x7f89efd8b43a7, 0x1aef49ec23700, 0x079376fa30500
 )};
 
 #if IMAGINE_TWIST
@@ -69,14 +80,14 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
 #define NEG_D 0
 #endif
 
-/** Number of bytes in a Ristretto$(gf_bits) public key. */
-#define RISTRETTO$(gf_bits)_PUBLIC_BYTES $((gf_bits)//8 + 1)
+/** Number of bytes in a Ristretto255 public key. */
+#define RISTRETTO255_PUBLIC_BYTES 32
 
-/** Number of bytes in an Ristretto$(gf_bits) private key. */
-#define RISTRETTO$(gf_bits)_PRIVATE_BYTES RISTRETTO$(gf_bits)_PUBLIC_BYTES
+/** Number of bytes in an Ristretto255 private key. */
+#define RISTRETTO255_PRIVATE_BYTES RISTRETTO255_PUBLIC_BYTES
 
-/** Number of bytes in an Ristretto$(gf_bits) private key. */
-#define RISTRETTO$(gf_bits)_SIGNATURE_BYTES (RISTRETTO$(gf_bits)_PUBLIC_BYTES + RISTRETTO$(gf_bits)_PRIVATE_BYTES)
+/** Number of bytes in an Ristretto255 private key. */
+#define RISTRETTO255_SIGNATURE_BYTES (RISTRETTO255_PUBLIC_BYTES + RISTRETTO255_PRIVATE_BYTES)
 
 /* End of template stuff */
 
@@ -104,7 +115,7 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
 
 #define WBITS RISTRETTO_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
-extern const point_t ristretto$(gf_bits)_point_base;
+extern const point_t ristretto255_point_base;
 
 /* Projective Niels coordinates */
 typedef struct { gf a, b, c; } niels_s, niels_t[1];
@@ -113,12 +124,12 @@ typedef struct { niels_t n; gf z; } VECTOR_ALIGNED pniels_s, pniels_t[1];
 /* Precomputed base */
 struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
 
-extern const gf ristretto$(gf_bits)_precomputed_base_as_fe[];
-const precomputed_s *ristretto$(gf_bits)_precomputed_base =
-    (const precomputed_s *) &ristretto$(gf_bits)_precomputed_base_as_fe;
+extern const gf ristretto255_precomputed_base_as_fe[];
+const precomputed_s *ristretto255_precomputed_base =
+    (const precomputed_s *) &ristretto255_precomputed_base_as_fe;
 
-const size_t ristretto$(gf_bits)_sizeof_precomputed_s = sizeof(precomputed_s);
-const size_t ristretto$(gf_bits)_alignof_precomputed_s = sizeof(big_register_t);
+const size_t ristretto255_sizeof_precomputed_s = sizeof(precomputed_s);
+const size_t ristretto255_alignof_precomputed_s = sizeof(big_register_t);
 
 /** Inverse. */
 static void
@@ -134,10 +145,10 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 }
 
 /** identity = (0,1) */
-const point_t ristretto$(gf_bits)_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
+const point_t ristretto255_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 /* Predeclare because not static: called by elligator */
-void ristretto$(gf_bits)_deisogenize (
+void ristretto255_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -147,7 +158,7 @@ void ristretto$(gf_bits)_deisogenize (
     mask_t toggle_rotation
 );
 
-void ristretto$(gf_bits)_deisogenize (
+void ristretto255_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -235,16 +246,16 @@ void ristretto$(gf_bits)_deisogenize (
 #endif
 }
 
-void ristretto$(gf_bits)_point_encode( unsigned char ser[SER_BYTES], const point_t p ) {
+void ristretto255_point_encode( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s,ie1,ie2;
-    ristretto$(gf_bits)_deisogenize(s,ie1,ie2,p,0,0,0);
+    ristretto255_deisogenize(s,ie1,ie2,p,0,0,0);
     gf_serialize(ser,s,1);
 }
 
-ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode (
+ristretto_error_t ristretto255_point_decode (
     point_t p,
     const unsigned char ser[SER_BYTES],
-    ristretto$(gf_bits)_bool_t allow_identity
+    ristretto_bool_t allow_identity
 ) {
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
@@ -290,11 +301,11 @@ ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode (
     gf_copy(p->z,ONE);
     gf_mul(p->t,p->x,p->y);
     
-    assert(ristretto$(gf_bits)_point_valid(p) | ~succ);
-    return ristretto$(gf_bits)_succeed_if(mask_to_bool(succ));
+    assert(ristretto255_point_valid(p) | ~succ);
+    return ristretto_succeed_if(mask_to_bool(succ));
 }
 
-void ristretto$(gf_bits)_point_sub (
+void ristretto255_point_sub (
     point_t p,
     const point_t q,
     const point_t r
@@ -326,7 +337,7 @@ void ristretto$(gf_bits)_point_sub (
     gf_mul ( p->t, b, c );
 }
     
-void ristretto$(gf_bits)_point_add (
+void ristretto255_point_add (
     point_t p,
     const point_t q,
     const point_t r
@@ -382,11 +393,11 @@ point_double_internal (
     if (!before_double) gf_mul ( p->t, b, d );
 }
 
-void ristretto$(gf_bits)_point_double(point_t p, const point_t q) {
+void ristretto255_point_double(point_t p, const point_t q) {
     point_double_internal(p,q,0);
 }
 
-void ristretto$(gf_bits)_point_negate (
+void ristretto255_point_negate (
    point_t nega,
    const point_t a
 ) {
@@ -521,17 +532,17 @@ prepare_fixed_window(
     point_double_internal(tmp, b, 0);
     pt_to_pniels(pn, tmp);
     pt_to_pniels(multiples[0], b);
-    ristretto$(gf_bits)_point_copy(tmp, b);
+    ristretto255_point_copy(tmp, b);
     for (i=1; i<ntable; i++) {
         add_pniels_to_pt(tmp, pn, 0);
         pt_to_pniels(multiples[i], tmp);
     }
     
-    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
-    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
+    ristretto_bzero(pn,sizeof(pn));
+    ristretto_bzero(tmp,sizeof(tmp));
 }
 
-void ristretto$(gf_bits)_point_scalarmul (
+void ristretto255_point_scalarmul (
     point_t a,
     const point_t b,
     const scalar_t scalar
@@ -543,8 +554,8 @@ void ristretto$(gf_bits)_point_scalarmul (
         NTABLE = 1<<(WINDOW-1);
         
     scalar_t scalar1x;
-    ristretto$(gf_bits)_scalar_add(scalar1x, scalar, point_scalarmul_adjustment);
-    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
+    ristretto255_scalar_add(scalar1x, scalar, point_scalarmul_adjustment);
+    ristretto255_scalar_halve(scalar1x,scalar1x);
     
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples[1<<((int)(RISTRETTO_WINDOW_BITS)-1)];  // == NTABLE (MSVC compatibility issue)
@@ -584,15 +595,15 @@ void ristretto$(gf_bits)_point_scalarmul (
     }
     
     /* Write out the answer */
-    ristretto$(gf_bits)_point_copy(a,tmp);
+    ristretto255_point_copy(a,tmp);
     
-    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
-    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
-    ristretto$(gf_bits)_bzero(multiples,sizeof(multiples));
-    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
+    ristretto_bzero(scalar1x,sizeof(scalar1x));
+    ristretto_bzero(pn,sizeof(pn));
+    ristretto_bzero(multiples,sizeof(multiples));
+    ristretto_bzero(tmp,sizeof(tmp));
 }
 
-void ristretto$(gf_bits)_point_double_scalarmul (
+void ristretto255_point_double_scalarmul (
     point_t a,
     const point_t b,
     const scalar_t scalarb,
@@ -606,10 +617,10 @@ void ristretto$(gf_bits)_point_double_scalarmul (
         NTABLE = 1<<(WINDOW-1);
 
     scalar_t scalar1x, scalar2x;
-    ristretto$(gf_bits)_scalar_add(scalar1x, scalarb, point_scalarmul_adjustment);
-    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
-    ristretto$(gf_bits)_scalar_add(scalar2x, scalarc, point_scalarmul_adjustment);
-    ristretto$(gf_bits)_scalar_halve(scalar2x,scalar2x);
+    ristretto255_scalar_add(scalar1x, scalarb, point_scalarmul_adjustment);
+    ristretto255_scalar_halve(scalar1x,scalar1x);
+    ristretto255_scalar_add(scalar2x, scalarc, point_scalarmul_adjustment);
+    ristretto255_scalar_halve(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples1[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], multiples2[1<<((int)(RISTRETTO_WINDOW_BITS)-1)];
@@ -659,18 +670,18 @@ void ristretto$(gf_bits)_point_double_scalarmul (
     }
     
     /* Write out the answer */
-    ristretto$(gf_bits)_point_copy(a,tmp);
+    ristretto255_point_copy(a,tmp);
     
 
-    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
-    ristretto$(gf_bits)_bzero(scalar2x,sizeof(scalar2x));
-    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
-    ristretto$(gf_bits)_bzero(multiples1,sizeof(multiples1));
-    ristretto$(gf_bits)_bzero(multiples2,sizeof(multiples2));
-    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
+    ristretto_bzero(scalar1x,sizeof(scalar1x));
+    ristretto_bzero(scalar2x,sizeof(scalar2x));
+    ristretto_bzero(pn,sizeof(pn));
+    ristretto_bzero(multiples1,sizeof(multiples1));
+    ristretto_bzero(multiples2,sizeof(multiples2));
+    ristretto_bzero(tmp,sizeof(tmp));
 }
 
-void ristretto$(gf_bits)_point_dual_scalarmul (
+void ristretto255_point_dual_scalarmul (
     point_t a1,
     point_t a2,
     const point_t b,
@@ -685,10 +696,10 @@ void ristretto$(gf_bits)_point_dual_scalarmul (
 
 
     scalar_t scalar1x, scalar2x;
-    ristretto$(gf_bits)_scalar_add(scalar1x, scalar1, point_scalarmul_adjustment);
-    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
-    ristretto$(gf_bits)_scalar_add(scalar2x, scalar2, point_scalarmul_adjustment);
-    ristretto$(gf_bits)_scalar_halve(scalar2x,scalar2x);
+    ristretto255_scalar_add(scalar1x, scalar1, point_scalarmul_adjustment);
+    ristretto255_scalar_halve(scalar1x,scalar1x);
+    ristretto255_scalar_add(scalar2x, scalar2, point_scalarmul_adjustment);
+    ristretto255_scalar_halve(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
     point_t multiples1[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], multiples2[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], working, tmp;
@@ -696,14 +707,14 @@ void ristretto$(gf_bits)_point_dual_scalarmul (
 
     pniels_t pn;
     
-    ristretto$(gf_bits)_point_copy(working, b);
+    ristretto255_point_copy(working, b);
 
     /* Initialize. */
     int i,j;
     
     for (i=0; i<NTABLE; i++) {
-        ristretto$(gf_bits)_point_copy(multiples1[i], ristretto$(gf_bits)_point_identity);
-        ristretto$(gf_bits)_point_copy(multiples2[i], ristretto$(gf_bits)_point_identity);
+        ristretto255_point_copy(multiples1[i], ristretto255_point_identity);
+        ristretto255_point_copy(multiples2[i], ristretto255_point_identity);
     }
 
     for (i=0; i<SCALAR_BITS; i+=WINDOW) {   
@@ -744,37 +755,37 @@ void ristretto$(gf_bits)_point_dual_scalarmul (
     }
     
     if (NTABLE > 1) {
-        ristretto$(gf_bits)_point_copy(working, multiples1[NTABLE-1]);
-        ristretto$(gf_bits)_point_copy(tmp    , multiples2[NTABLE-1]);
+        ristretto255_point_copy(working, multiples1[NTABLE-1]);
+        ristretto255_point_copy(tmp    , multiples2[NTABLE-1]);
     
         for (i=NTABLE-1; i>1; i--) {
-            ristretto$(gf_bits)_point_add(multiples1[i-1], multiples1[i-1], multiples1[i]);
-            ristretto$(gf_bits)_point_add(multiples2[i-1], multiples2[i-1], multiples2[i]);
-            ristretto$(gf_bits)_point_add(working, working, multiples1[i-1]);
-            ristretto$(gf_bits)_point_add(tmp,     tmp,     multiples2[i-1]);
+            ristretto255_point_add(multiples1[i-1], multiples1[i-1], multiples1[i]);
+            ristretto255_point_add(multiples2[i-1], multiples2[i-1], multiples2[i]);
+            ristretto255_point_add(working, working, multiples1[i-1]);
+            ristretto255_point_add(tmp,     tmp,     multiples2[i-1]);
         }
     
-        ristretto$(gf_bits)_point_add(multiples1[0], multiples1[0], multiples1[1]);
-        ristretto$(gf_bits)_point_add(multiples2[0], multiples2[0], multiples2[1]);
+        ristretto255_point_add(multiples1[0], multiples1[0], multiples1[1]);
+        ristretto255_point_add(multiples2[0], multiples2[0], multiples2[1]);
         point_double_internal(working, working, 0);
         point_double_internal(tmp,         tmp, 0);
-        ristretto$(gf_bits)_point_add(a1, working, multiples1[0]);
-        ristretto$(gf_bits)_point_add(a2, tmp,     multiples2[0]);
+        ristretto255_point_add(a1, working, multiples1[0]);
+        ristretto255_point_add(a2, tmp,     multiples2[0]);
     } else {
-        ristretto$(gf_bits)_point_copy(a1, multiples1[0]);
-        ristretto$(gf_bits)_point_copy(a2, multiples2[0]);
+        ristretto255_point_copy(a1, multiples1[0]);
+        ristretto255_point_copy(a2, multiples2[0]);
     }
 
-    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
-    ristretto$(gf_bits)_bzero(scalar2x,sizeof(scalar2x));
-    ristretto$(gf_bits)_bzero(pn,sizeof(pn));
-    ristretto$(gf_bits)_bzero(multiples1,sizeof(multiples1));
-    ristretto$(gf_bits)_bzero(multiples2,sizeof(multiples2));
-    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
-    ristretto$(gf_bits)_bzero(working,sizeof(working));
+    ristretto_bzero(scalar1x,sizeof(scalar1x));
+    ristretto_bzero(scalar2x,sizeof(scalar2x));
+    ristretto_bzero(pn,sizeof(pn));
+    ristretto_bzero(multiples1,sizeof(multiples1));
+    ristretto_bzero(multiples2,sizeof(multiples2));
+    ristretto_bzero(tmp,sizeof(tmp));
+    ristretto_bzero(working,sizeof(working));
 }
 
-ristretto$(gf_bits)_bool_t ristretto$(gf_bits)_point_eq ( const point_t p, const point_t q ) {
+ristretto_bool_t ristretto255_point_eq ( const point_t p, const point_t q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
@@ -800,7 +811,7 @@ ristretto$(gf_bits)_bool_t ristretto$(gf_bits)_point_eq ( const point_t p, const
     return mask_to_bool(succ);
 }
 
-ristretto$(gf_bits)_bool_t ristretto$(gf_bits)_point_valid (
+ristretto_bool_t ristretto255_point_valid (
     const point_t p
 ) {
     gf a,b,c;
@@ -819,7 +830,7 @@ ristretto$(gf_bits)_bool_t ristretto$(gf_bits)_point_valid (
     return mask_to_bool(out);
 }
 
-void ristretto$(gf_bits)_point_debugging_torque (
+void ristretto255_point_debugging_torque (
     point_t q,
     const point_t p
 ) {
@@ -838,7 +849,7 @@ void ristretto$(gf_bits)_point_debugging_torque (
 #endif
 }
 
-void ristretto$(gf_bits)_point_debugging_pscale (
+void ristretto255_point_debugging_pscale (
     point_t q,
     const point_t p,
     const uint8_t factor[SER_BYTES]
@@ -906,10 +917,10 @@ static void batch_normalize_niels (
         gf_copy(table[i]->c, product);
     }
     
-    ristretto$(gf_bits)_bzero(product,sizeof(product));
+    ristretto_bzero(product,sizeof(product));
 }
 
-void ristretto$(gf_bits)_precompute (
+void ristretto255_precompute (
     precomputed_s *table,
     const point_t base
 ) { 
@@ -917,7 +928,7 @@ void ristretto$(gf_bits)_precompute (
     assert(n*t*s >= SCALAR_BITS);
   
     point_t working, start, doubles[COMBS_T-1];
-    ristretto$(gf_bits)_point_copy(working, base);
+    ristretto255_point_copy(working, base);
     pniels_t pn_tmp;
   
     gf zs[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)], zis[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)];
@@ -929,13 +940,13 @@ void ristretto$(gf_bits)_precompute (
 
         /* Doubling phase */
         for (j=0; j<t; j++) {
-            if (j) ristretto$(gf_bits)_point_add(start, start, working);
-            else ristretto$(gf_bits)_point_copy(start, working);
+            if (j) ristretto255_point_add(start, start, working);
+            else ristretto255_point_copy(start, working);
 
             if (j==t-1 && i==n-1) break;
 
             point_double_internal(working, working,0);
-            if (j<t-1) ristretto$(gf_bits)_point_copy(doubles[j], working);
+            if (j<t-1) ristretto255_point_copy(doubles[j], working);
 
             for (k=0; k<s-1; k++)
                 point_double_internal(working, working, k<s-2);
@@ -957,21 +968,21 @@ void ristretto$(gf_bits)_precompute (
                 delta >>=1;
             
             if (gray & (1<<k)) {
-                ristretto$(gf_bits)_point_add(start, start, doubles[k]);
+                ristretto255_point_add(start, start, doubles[k]);
             } else {
-                ristretto$(gf_bits)_point_sub(start, start, doubles[k]);
+                ristretto255_point_sub(start, start, doubles[k]);
             }
         }
     }
     
     batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
     
-    ristretto$(gf_bits)_bzero(zs,sizeof(zs));
-    ristretto$(gf_bits)_bzero(zis,sizeof(zis));
-    ristretto$(gf_bits)_bzero(pn_tmp,sizeof(pn_tmp));
-    ristretto$(gf_bits)_bzero(working,sizeof(working));
-    ristretto$(gf_bits)_bzero(start,sizeof(start));
-    ristretto$(gf_bits)_bzero(doubles,sizeof(doubles));
+    ristretto_bzero(zs,sizeof(zs));
+    ristretto_bzero(zis,sizeof(zis));
+    ristretto_bzero(pn_tmp,sizeof(pn_tmp));
+    ristretto_bzero(working,sizeof(working));
+    ristretto_bzero(start,sizeof(start));
+    ristretto_bzero(doubles,sizeof(doubles));
 }
 
 static RISTRETTO_INLINE void
@@ -984,7 +995,7 @@ constant_time_lookup_niels (
     constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
 }
 
-void ristretto$(gf_bits)_precomputed_scalarmul (
+void ristretto255_precomputed_scalarmul (
     point_t out,
     const precomputed_s *table,
     const scalar_t scalar
@@ -994,8 +1005,8 @@ void ristretto$(gf_bits)_precomputed_scalarmul (
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     
     scalar_t scalar1x;
-    ristretto$(gf_bits)_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
-    ristretto$(gf_bits)_scalar_halve(scalar1x,scalar1x);
+    ristretto255_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
+    ristretto255_scalar_halve(scalar1x,scalar1x);
     
     niels_t ni;
     
@@ -1027,39 +1038,39 @@ void ristretto$(gf_bits)_precomputed_scalarmul (
         }
     }
     
-    ristretto$(gf_bits)_bzero(ni,sizeof(ni));
-    ristretto$(gf_bits)_bzero(scalar1x,sizeof(scalar1x));
+    ristretto_bzero(ni,sizeof(ni));
+    ristretto_bzero(scalar1x,sizeof(scalar1x));
 }
 
-void ristretto$(gf_bits)_point_cond_sel (
+void ristretto255_point_cond_sel (
     point_t out,
     const point_t a,
     const point_t b,
-    ristretto$(gf_bits)_bool_t pick_b
+    ristretto_bool_t pick_b
 ) {
     constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
 }
 
 /* FUTURE: restore Curve25519 Montgomery ladder? */
-ristretto$(gf_bits)_error_t ristretto$(gf_bits)_direct_scalarmul (
+ristretto_error_t ristretto255_direct_scalarmul (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
     const scalar_t scalar,
-    ristretto$(gf_bits)_bool_t allow_identity,
-    ristretto$(gf_bits)_bool_t short_circuit
+    ristretto_bool_t allow_identity,
+    ristretto_bool_t short_circuit
 ) {
     point_t basep;
-    ristretto$(gf_bits)_error_t succ = ristretto$(gf_bits)_point_decode(basep, base, allow_identity);
+    ristretto_error_t succ = ristretto255_point_decode(basep, base, allow_identity);
     if (short_circuit && succ != RISTRETTO_SUCCESS) return succ;
-    ristretto$(gf_bits)_point_cond_sel(basep, ristretto$(gf_bits)_point_base, basep, succ);
-    ristretto$(gf_bits)_point_scalarmul(basep, basep, scalar);
-    ristretto$(gf_bits)_point_encode(scaled, basep);
-    ristretto$(gf_bits)_point_destroy(basep);
+    ristretto255_point_cond_sel(basep, ristretto255_point_base, basep, succ);
+    ristretto255_point_scalarmul(basep, basep, scalar);
+    ristretto255_point_encode(scaled, basep);
+    ristretto255_point_destroy(basep);
     return succ;
 }
 
-void ristretto$(gf_bits)_point_mul_by_ratio_and_encode_like_eddsa (
-    uint8_t enc[RISTRETTO$(gf_bits)_PUBLIC_BYTES],
+void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
+    uint8_t enc[RISTRETTO255_PUBLIC_BYTES],
     const point_t p
 ) {
     
@@ -1067,9 +1078,9 @@ void ristretto$(gf_bits)_point_mul_by_ratio_and_encode_like_eddsa (
     gf x, y, z, t;
     point_t q;
 #if COFACTOR == 8
-    ristretto$(gf_bits)_point_double(q,p);
+    ristretto255_point_double(q,p);
 #else
-    ristretto$(gf_bits)_point_copy(q,p);
+    ristretto255_point_copy(q,p);
 #endif
     
 #if EDDSA_USE_SIGMA_ISOGENY
@@ -1103,12 +1114,12 @@ void ristretto$(gf_bits)_point_mul_by_ratio_and_encode_like_eddsa (
 #error "... probably wrong"
         gf_copy( x, u );
 #endif
-        ristretto$(gf_bits)_bzero(u,sizeof(u));
+        ristretto_bzero(u,sizeof(u));
     }
 #elif IMAGINE_TWIST
     {
-        ristretto$(gf_bits)_point_double(q,q);
-        ristretto$(gf_bits)_point_double(q,q);
+        ristretto255_point_double(q,q);
+        ristretto255_point_double(q,q);
         gf_mul_i(x, q->x);
         gf_copy(y, q->y);
         gf_copy(z, q->z);
@@ -1130,7 +1141,7 @@ void ristretto$(gf_bits)_point_mul_by_ratio_and_encode_like_eddsa (
         gf_mul ( x, t, y );
         gf_mul ( y, z, u );
         gf_mul ( z, u, t );
-        ristretto$(gf_bits)_bzero(u,sizeof(u));
+        ristretto_bzero(u,sizeof(u));
     }
 #endif
     /* Affinize */
@@ -1139,31 +1150,31 @@ void ristretto$(gf_bits)_point_mul_by_ratio_and_encode_like_eddsa (
     gf_mul(x,y,z);
     
     /* Encode */
-    enc[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] = 0;
+    enc[RISTRETTO255_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
-    enc[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
+    enc[RISTRETTO255_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
-    ristretto$(gf_bits)_bzero(x,sizeof(x));
-    ristretto$(gf_bits)_bzero(y,sizeof(y));
-    ristretto$(gf_bits)_bzero(z,sizeof(z));
-    ristretto$(gf_bits)_bzero(t,sizeof(t));
-    ristretto$(gf_bits)_point_destroy(q);
+    ristretto_bzero(x,sizeof(x));
+    ristretto_bzero(y,sizeof(y));
+    ristretto_bzero(z,sizeof(z));
+    ristretto_bzero(t,sizeof(t));
+    ristretto255_point_destroy(q);
 }
 
 
-ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode_like_eddsa_and_mul_by_ratio (
+ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
     point_t p,
-    const uint8_t enc[RISTRETTO$(gf_bits)_PUBLIC_BYTES]
+    const uint8_t enc[RISTRETTO255_PUBLIC_BYTES]
 ) {
-    uint8_t enc2[RISTRETTO$(gf_bits)_PUBLIC_BYTES];
+    uint8_t enc2[RISTRETTO255_PUBLIC_BYTES];
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] & 0x80);
-    enc2[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1] &= ~0x80;
+    mask_t low = ~word_is_zero(enc2[RISTRETTO255_PRIVATE_BYTES-1] & 0x80);
+    enc2[RISTRETTO255_PRIVATE_BYTES-1] &= ~0x80;
     
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
-#if $(gf_bits % 8) == 0
-    succ &= word_is_zero(enc2[RISTRETTO$(gf_bits)_PRIVATE_BYTES-1]);
+#if 7 == 0
+    succ &= word_is_zero(enc2[RISTRETTO255_PRIVATE_BYTES-1]);
 #endif
 
     gf_sqr(p->x,p->y);
@@ -1213,10 +1224,10 @@ ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode_like_eddsa_and_mul_
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->t, d, b );
-        ristretto$(gf_bits)_bzero(a,sizeof(a));
-        ristretto$(gf_bits)_bzero(b,sizeof(b));
-        ristretto$(gf_bits)_bzero(c,sizeof(c));
-        ristretto$(gf_bits)_bzero(d,sizeof(d));
+        ristretto_bzero(a,sizeof(a));
+        ristretto_bzero(b,sizeof(b));
+        ristretto_bzero(c,sizeof(c));
+        ristretto_bzero(d,sizeof(d));
     } 
     #elif IMAGINE_TWIST
     {
@@ -1242,17 +1253,17 @@ ristretto$(gf_bits)_error_t ristretto$(gf_bits)_point_decode_like_eddsa_and_mul_
         gf_mul ( p->z, p->t, a );
         gf_mul ( p->y, p->t, d );
         gf_mul ( p->t, b, d );
-        ristretto$(gf_bits)_bzero(a,sizeof(a));
-        ristretto$(gf_bits)_bzero(b,sizeof(b));
-        ristretto$(gf_bits)_bzero(c,sizeof(c));
-        ristretto$(gf_bits)_bzero(d,sizeof(d));
+        ristretto_bzero(a,sizeof(a));
+        ristretto_bzero(b,sizeof(b));
+        ristretto_bzero(c,sizeof(c));
+        ristretto_bzero(d,sizeof(d));
     }
     #endif
     
-    ristretto$(gf_bits)_bzero(enc2,sizeof(enc2));
-    assert(ristretto$(gf_bits)_point_valid(p) || ~succ);
+    ristretto_bzero(enc2,sizeof(enc2));
+    assert(ristretto255_point_valid(p) || ~succ);
     
-    return ristretto$(gf_bits)_succeed_if(mask_to_bool(succ));
+    return ristretto_succeed_if(mask_to_bool(succ));
 }
 
 /**
@@ -1327,7 +1338,7 @@ prepare_wnaf_table(
 
     if (tbits == 0) return;
 
-    ristretto$(gf_bits)_point_double(tmp,working);
+    ristretto255_point_double(tmp,working);
     pniels_t twop;
     pt_to_pniels(twop, tmp);
 
@@ -1339,21 +1350,21 @@ prepare_wnaf_table(
         pt_to_pniels(output[i], tmp);
     }
     
-    ristretto$(gf_bits)_point_destroy(tmp);
-    ristretto$(gf_bits)_bzero(twop,sizeof(twop));
+    ristretto255_point_destroy(tmp);
+    ristretto_bzero(twop,sizeof(twop));
 }
 
-extern const gf ristretto$(gf_bits)_precomputed_wnaf_as_fe[];
-static const niels_t *ristretto$(gf_bits)_wnaf_base = (const niels_t *)ristretto$(gf_bits)_precomputed_wnaf_as_fe;
-const size_t ristretto$(gf_bits)_sizeof_precomputed_wnafs __attribute((visibility("hidden")))
+extern const gf ristretto255_precomputed_wnaf_as_fe[];
+static const niels_t *ristretto255_wnaf_base = (const niels_t *)ristretto255_precomputed_wnaf_as_fe;
+const size_t ristretto255_sizeof_precomputed_wnafs __attribute((visibility("hidden")))
     = sizeof(niels_t)<<RISTRETTO_WNAF_FIXED_TABLE_BITS;
 
-void ristretto$(gf_bits)_precompute_wnafs (
+void ristretto255_precompute_wnafs (
     niels_t out[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS],
     const point_t base
 ) __attribute__ ((visibility ("hidden")));
 
-void ristretto$(gf_bits)_precompute_wnafs (
+void ristretto255_precompute_wnafs (
     niels_t out[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS],
     const point_t base
 ) {
@@ -1367,12 +1378,12 @@ void ristretto$(gf_bits)_precompute_wnafs (
     }
     batch_normalize_niels(out, (const gf *)zs, zis, 1<<RISTRETTO_WNAF_FIXED_TABLE_BITS);
     
-    ristretto$(gf_bits)_bzero(tmp,sizeof(tmp));
-    ristretto$(gf_bits)_bzero(zs,sizeof(zs));
-    ristretto$(gf_bits)_bzero(zis,sizeof(zis));
+    ristretto_bzero(tmp,sizeof(tmp));
+    ristretto_bzero(zs,sizeof(zs));
+    ristretto_bzero(zis,sizeof(zis));
 }
 
-void ristretto$(gf_bits)_base_double_scalarmul_non_secret (
+void ristretto255_base_double_scalarmul_non_secret (
     point_t combo,
     const scalar_t scalar1,
     const point_t base2,
@@ -1392,18 +1403,18 @@ void ristretto$(gf_bits)_base_double_scalarmul_non_secret (
     int contp=0, contv=0, i = control_var[0].power;
 
     if (i < 0) {
-        ristretto$(gf_bits)_point_copy(combo, ristretto$(gf_bits)_point_identity);
+        ristretto255_point_copy(combo, ristretto255_point_identity);
         return;
     } else if (i > control_pre[0].power) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
         contv++;
     } else if (i == control_pre[0].power && i >=0 ) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
-        add_niels_to_pt(combo, ristretto$(gf_bits)_wnaf_base[control_pre[0].addend >> 1], i);
+        add_niels_to_pt(combo, ristretto255_wnaf_base[control_pre[0].addend >> 1], i);
         contv++; contp++;
     } else {
         i = control_pre[0].power;
-        niels_to_pt(combo, ristretto$(gf_bits)_wnaf_base[control_pre[0].addend >> 1]);
+        niels_to_pt(combo, ristretto255_wnaf_base[control_pre[0].addend >> 1]);
         contp++;
     }
     
@@ -1426,31 +1437,31 @@ void ristretto$(gf_bits)_base_double_scalarmul_non_secret (
             assert(control_pre[contp].addend);
 
             if (control_pre[contp].addend > 0) {
-                add_niels_to_pt(combo, ristretto$(gf_bits)_wnaf_base[control_pre[contp].addend >> 1], i);
+                add_niels_to_pt(combo, ristretto255_wnaf_base[control_pre[contp].addend >> 1], i);
             } else {
-                sub_niels_from_pt(combo, ristretto$(gf_bits)_wnaf_base[(-control_pre[contp].addend) >> 1], i);
+                sub_niels_from_pt(combo, ristretto255_wnaf_base[(-control_pre[contp].addend) >> 1], i);
             }
             contp++;
         }
     }
     
     /* This function is non-secret, but whatever this is cheap. */
-    ristretto$(gf_bits)_bzero(control_var,sizeof(control_var));
-    ristretto$(gf_bits)_bzero(control_pre,sizeof(control_pre));
-    ristretto$(gf_bits)_bzero(precmp_var,sizeof(precmp_var));
+    ristretto_bzero(control_var,sizeof(control_var));
+    ristretto_bzero(control_pre,sizeof(control_pre));
+    ristretto_bzero(precmp_var,sizeof(precmp_var));
 
     assert(contv == ncb_var); (void)ncb_var;
     assert(contp == ncb_pre); (void)ncb_pre;
 }
 
-void ristretto$(gf_bits)_point_destroy (
+void ristretto255_point_destroy (
     point_t point
 ) {
-    ristretto$(gf_bits)_bzero(point, sizeof(point_t));
+    ristretto_bzero(point, sizeof(point_t));
 }
 
-void ristretto$(gf_bits)_precomputed_destroy (
+void ristretto255_precomputed_destroy (
     precomputed_s *pre
 ) {
-    ristretto$(gf_bits)_bzero(pre, ristretto$(gf_bits)_sizeof_precomputed_s);
+    ristretto_bzero(pre, ristretto255_sizeof_precomputed_s);
 }

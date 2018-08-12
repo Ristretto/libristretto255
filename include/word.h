@@ -253,22 +253,22 @@ malloc_vector(size_t size) {
 
 /* The plan on booleans:
  *
- * The external interface uses ristretto255_bool_t, but this might be a different
+ * The external interface uses ristretto_bool_t, but this might be a different
  * size than our particular arch's word_t (and thus mask_t).  Also, the caller
  * isn't guaranteed to pass it as nonzero.  So bool_to_mask converts word sizes
  * and checks nonzero.
  *
  * On the flip side, mask_t is always -1 or 0, but it might be a different size
- * than ristretto255_bool_t.
+ * than ristretto_bool_t.
  */
-static RISTRETTO_INLINE ristretto255_bool_t mask_to_bool (mask_t m) {
-    return (ristretto255_sword_t)(sword_t)m;
+static RISTRETTO_INLINE ristretto_bool_t mask_to_bool (mask_t m) {
+    return (ristretto_sword_t)(sword_t)m;
 }
 
-static RISTRETTO_INLINE mask_t bool_to_mask (ristretto255_bool_t m) {
+static RISTRETTO_INLINE mask_t bool_to_mask (ristretto_bool_t m) {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;
-    unsigned int limit = sizeof(ristretto255_bool_t)/sizeof(mask_t);
+    unsigned int limit = sizeof(ristretto_bool_t)/sizeof(mask_t);
     if (limit < 1) limit = 1;
     for (unsigned int i=0; i<limit; i++) {
         ret |= ~ word_is_zero(m >> (i*8*sizeof(word_t)));
@@ -276,7 +276,7 @@ static RISTRETTO_INLINE mask_t bool_to_mask (ristretto255_bool_t m) {
     return ret;
 }
 
-static RISTRETTO_INLINE void ignore_result ( ristretto255_bool_t boo ) {
+static RISTRETTO_INLINE void ignore_result ( ristretto_bool_t boo ) {
     (void)boo;
 }
 

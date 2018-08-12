@@ -1,21 +1,32 @@
-/** @brief Elligator high-level functions. */
-
+/**
+ * @file curve25519/elligator.c
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief Elligator high-level functions.
+ *
+ * @warning This file was automatically generated in Python.
+ * Please do not edit it.
+ */
 #include "word.h"
 #include "field.h"
-#include <ristretto$(gf_bits)/common.h>
-#include <ristretto$(gf_bits)/point.h>
+#include <ristretto255/common.h>
+#include <ristretto255/point.h>
 
 /* Template stuff */
-#define point_t ristretto$(gf_bits)_point_t
-#define IMAGINE_TWIST $(imagine_twist)
-#define COFACTOR $(cofactor)
-static const int EDWARDS_D = $(d);
+#define point_t ristretto255_point_t
+#define IMAGINE_TWIST 1
+#define COFACTOR 8
+static const int EDWARDS_D = -121665;
 
-#define RISTRETTO_FACTOR RISTRETTO$(gf_bits)_FACTOR
+#define RISTRETTO_FACTOR RISTRETTO255_FACTOR
 extern const gf RISTRETTO_FACTOR;
 
 /* End of template stuff */
-extern mask_t ristretto$(gf_bits)_deisogenize (
+extern mask_t ristretto255_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -25,12 +36,12 @@ extern mask_t ristretto$(gf_bits)_deisogenize (
     mask_t toggle_rotation
 );
 
-void ristretto$(gf_bits)_point_from_hash_nonuniform (
+void ristretto255_point_from_hash_nonuniform (
     point_t p,
     const unsigned char ser[SER_BYTES]
 ) {
     gf r0,r,a,b,c,N,e;
-    const uint8_t mask = (uint8_t)(0xFE<<($((gf_bits-1)%8)));
+    const uint8_t mask = (uint8_t)(0xFE<<(6));
     ignore_result(gf_deserialize(r0,ser,0,mask));
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
@@ -81,17 +92,17 @@ void ristretto$(gf_bits)_point_from_hash_nonuniform (
     gf_mul(p->y,e,a); /* (1+s^2)(1-s^2) */
     gf_mul(p->z,a,b); /* (1-s^2)t */
     
-    assert(ristretto$(gf_bits)_point_valid(p));
+    assert(ristretto255_point_valid(p));
 }
 
-void ristretto$(gf_bits)_point_from_hash_uniform (
+void ristretto255_point_from_hash_uniform (
     point_t pt,
     const unsigned char hashed_data[2*SER_BYTES]
 ) {
     point_t pt2;
-    ristretto$(gf_bits)_point_from_hash_nonuniform(pt,hashed_data);
-    ristretto$(gf_bits)_point_from_hash_nonuniform(pt2,&hashed_data[SER_BYTES]);
-    ristretto$(gf_bits)_point_add(pt,pt,pt2);
+    ristretto255_point_from_hash_nonuniform(pt,hashed_data);
+    ristretto255_point_from_hash_nonuniform(pt2,&hashed_data[SER_BYTES]);
+    ristretto255_point_add(pt,pt,pt2);
 }
 
 /* Elligator_onto:
@@ -102,8 +113,8 @@ void ristretto$(gf_bits)_point_from_hash_uniform (
  */
 #define MAX(A,B) (((A)>(B)) ? (A) : (B))
 
-ristretto$(gf_bits)_error_t
-ristretto$(gf_bits)_invert_elligator_nonuniform (
+ristretto_error_t
+ristretto255_invert_elligator_nonuniform (
     unsigned char recovered_hash[SER_BYTES],
     const point_t p,
     uint32_t hint_
@@ -117,7 +128,7 @@ ristretto$(gf_bits)_invert_elligator_nonuniform (
          */
         sgn_ed_T = -(hint>>3 & 1);
     gf a,b,c;
-    ristretto$(gf_bits)_deisogenize(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
+    ristretto255_deisogenize(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
     
     mask_t is_identity = gf_eq(p->t,ZERO);
 #if COFACTOR==4
@@ -153,7 +164,7 @@ ristretto$(gf_bits)_invert_elligator_nonuniform (
     succ |= gf_eq(b,ZERO);
     gf_mul(b,c,a);
     
-#if $(gf_bits) == 8*SER_BYTES + 1 /* p521. */
+#if 255 == 8*SER_BYTES + 1 /* p521. */
 #error "this won't work because it needs to adjust high bit, not low bit"
     sgn_r0 = 0;
 #endif
@@ -165,29 +176,29 @@ ristretto$(gf_bits)_invert_elligator_nonuniform (
     //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
     // #endif
     
-    #if $(gf_bits) == 8*SER_BYTES + 1 /* p521 */
+    #if 255 == 8*SER_BYTES + 1 /* p521 */
         gf_serialize(recovered_hash,b,0);
     #else
         gf_serialize(recovered_hash,b,1);
     #endif
-#if $(gf_bits%8)
+#if 7
     #if COFACTOR==8
-        recovered_hash[SER_BYTES-1] ^= (hint>>4)<<$(gf_bits%8);
+        recovered_hash[SER_BYTES-1] ^= (hint>>4)<<7;
     #else
-        recovered_hash[SER_BYTES-1] ^= (hint>>3)<<$(gf_bits%8);
+        recovered_hash[SER_BYTES-1] ^= (hint>>3)<<7;
     #endif
 #endif
-    return ristretto$(gf_bits)_succeed_if(mask_to_bool(succ));
+    return ristretto_succeed_if(mask_to_bool(succ));
 }
 
-ristretto$(gf_bits)_error_t
-ristretto$(gf_bits)_invert_elligator_uniform (
+ristretto_error_t
+ristretto255_invert_elligator_uniform (
     unsigned char partial_hash[2*SER_BYTES],
     const point_t p,
     uint32_t hint
 ) {
     point_t pt2;
-    ristretto$(gf_bits)_point_from_hash_nonuniform(pt2,&partial_hash[SER_BYTES]);
-    ristretto$(gf_bits)_point_sub(pt2,p,pt2);
-    return ristretto$(gf_bits)_invert_elligator_nonuniform(partial_hash,pt2,hint);
+    ristretto255_point_from_hash_nonuniform(pt2,&partial_hash[SER_BYTES]);
+    ristretto255_point_sub(pt2,p,pt2);
+    return ristretto255_invert_elligator_nonuniform(partial_hash,pt2,hint);
 }
