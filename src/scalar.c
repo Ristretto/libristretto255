@@ -10,10 +10,8 @@
  */
 #include "word.h"
 #include "constant_time.h"
-#include <ristretto255/common.h>
-#include <ristretto255/point.h>
+#include <ristretto255.h>
 
-/* Template stuff */
 #define SCALAR_BITS RISTRETTO255_SCALAR_BITS
 #define SCALAR_SER_BYTES RISTRETTO255_SCALAR_BYTES
 #define SCALAR_LIMBS RISTRETTO255_SCALAR_LIMBS
@@ -25,7 +23,6 @@ static const scalar_t sc_p = {{{
 }}}, sc_r2 = {{{
     SC_LIMB(0xa40611e3449c0f01), SC_LIMB(0xd00e1ba768859347), SC_LIMB(0xceec73d217f5be65), SC_LIMB(0x0399411b7c309a3d)
 }}};
-/* End of template stuff */
 
 #define WBITS RISTRETTO_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 

@@ -8,30 +8,13 @@
  *
  * @brief Ristretto255 high-level functions.
  */
+
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include "word.h"
 #include "field.h"
 
 #include <ristretto255.h>
 
-/* MSVC has no builtint ctz, this is a fix as in
-https://stackoverflow.com/questions/355967/how-to-use-msvc-intrinsics-to-get-the-equivalent-of-this-gcc-code/5468852#5468852
-*/
-#ifdef _MSC_VER
-#include <intrin.h>
-
-uint32_t __inline ctz(uint32_t value)
-{
-    DWORD trailing_zero = 0;
-    if ( _BitScanForward( &trailing_zero, value ) )
-        return trailing_zero;
-    else
-        return 32;  // This is undefined, I better choose 32 than 0
-}
-#define __builtin_ctz(x) ctz(x)
-#endif
-
-/* Template stuff */
 #define SCALAR_BITS RISTRETTO255_SCALAR_BITS
 #define SCALAR_SER_BYTES RISTRETTO255_SCALAR_BYTES
 #define SCALAR_LIMBS RISTRETTO255_SCALAR_LIMBS
@@ -67,8 +50,6 @@ const gf RISTRETTO255_FACTOR = {FIELD_LITERAL(
 #define EFF_D TWISTED_D
 #define NEG_D 0
 #endif
-
-/* End of template stuff */
 
 extern const gf SQRT_MINUS_ONE;
 
@@ -1036,6 +1017,23 @@ static int recode_wnaf (
     }
     return n-1;
 }
+
+/* MSVC has no builtint ctz, this is a fix as in
+https://stackoverflow.com/questions/355967/how-to-use-msvc-intrinsics-to-get-the-equivalent-of-this-gcc-code/5468852#5468852
+*/
+#ifdef _MSC_VER
+#include <intrin.h>
+
+uint32_t __inline ctz(uint32_t value)
+{
+    DWORD trailing_zero = 0;
+    if ( _BitScanForward( &trailing_zero, value ) )
+        return trailing_zero;
+    else
+        return 32;  // This is undefined, I better choose 32 than 0
+}
+#define __builtin_ctz(x) ctz(x)
+#endif
 
 static void
 prepare_wnaf_table(
