@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Ristretto255 high-level functions.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include "word.h"
@@ -61,8 +58,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
     SC_LIMB(0x977f4a4775473484), SC_LIMB(0x6de72ae98b3ab623), SC_LIMB(0xffffffffffffffff), SC_LIMB(0x0fffffffffffffff)
 }}};
 
-#define RISTRETTO_FACTOR RISTRETTO255_FACTOR
-const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
+const gf RISTRETTO255_FACTOR = {FIELD_LITERAL(
     0x702557fa2bf03, 0x514b7d1a82cc6, 0x7f89efd8b43a7, 0x1aef49ec23700, 0x079376fa30500
 )};
 
@@ -97,7 +93,7 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
 #error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
         /* OK, but why?
          * Two reasons: #1: There are bugs when COFACTOR == && IMAGINE_TWIST
-         # #2: 
+         # #2:
          */
 #endif
 
@@ -108,7 +104,7 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
 #if (COFACTOR != 8) && (COFACTOR != 4)
     #error "COFACTOR must be 4 or 8"
 #endif
- 
+
 #if IMAGINE_TWIST
     extern const gf SQRT_MINUS_ONE;
 #endif
@@ -171,7 +167,7 @@ void ristretto255_deisogenize (
     (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
     gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
-    
+
     gf_add(t1,p->x,p->t);
     gf_sub(t2,p->x,p->t);
     gf_mul(t3,t1,t2); /* t3 = num */
@@ -180,7 +176,7 @@ void ristretto255_deisogenize (
     gf_mulw(t2,t1,-1-TWISTED_D); /* -x^2 * (a-d) * num */
     gf_isr(t1,t2);    /* t1 = isr */
     gf_mul(t2,t1,t3); /* t2 = ratio */
-    gf_mul(t4,t2,RISTRETTO_FACTOR);
+    gf_mul(t4,t2,RISTRETTO255_FACTOR);
     mask_t negx = gf_lobit(t4) ^ toggle_altx;
     gf_cond_neg(t2, negx);
     gf_mul(t3,t2,p->z);
@@ -193,7 +189,7 @@ void ristretto255_deisogenize (
     gf_copy(inv_el_m1,p->x);
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
-    
+
 #elif COFACTOR == 8 && IMAGINE_TWIST
     /* More complicated because of rotation */
     gf t1,t2,t3,t4,t5;
@@ -206,7 +202,7 @@ void ristretto255_deisogenize (
     gf_mulw(t1,t4,-1-TWISTED_D);
     gf_isr(t4,t1);         /* isqrt(num*(a-d)*den^2) */
     gf_mul(t1,t2,t4);
-    gf_mul(t2,t1,RISTRETTO_FACTOR); /* t2 = "iden" in ristretto.sage */
+    gf_mul(t2,t1,RISTRETTO255_FACTOR); /* t2 = "iden" in ristretto.sage */
     gf_mul(t1,t3,t4);                 /* t1 = "inum" in ristretto.sage */
 
     /* Calculate altxy = iden*inum*i*t^2*(d-a) */
@@ -216,27 +212,27 @@ void ristretto255_deisogenize (
     gf_mul(t4,t3,p->t);
     gf_mulw(t3,t4,TWISTED_D+1);      /* iden*inum*i*t^2*(d-1) */
     mask_t rotate = toggle_rotation ^ gf_lobit(t3);
-    
+
     /* Rotate if altxy is negative */
     gf_cond_swap(t1,t2,rotate);
     gf_mul_i(t4,p->x);
     gf_cond_sel(t4,p->y,t4,rotate);  /* t4 = "fac" = ix if rotate, else y */
-    
-    gf_mul_i(t5,RISTRETTO_FACTOR); /* t5 = imi */
+
+    gf_mul_i(t5,RISTRETTO255_FACTOR); /* t5 = imi */
     gf_mul(t3,t5,t2);                /* iden * imi */
     gf_mul(t2,t5,t1);
     gf_mul(t5,t2,p->t);              /* "altx" = iden*imi*t */
     mask_t negx = gf_lobit(t5) ^ toggle_altx;
-    
+
     gf_cond_neg(t1,negx^rotate);
     gf_mul(t2,t1,p->z);
     gf_add(t2,t2,ONE);
     gf_mul(inv_el_sum,t2,t4);
     gf_mul(s,inv_el_sum,t3);
-    
+
     mask_t negs = gf_lobit(s);
     gf_cond_neg(s,negs);
-    
+
     mask_t negz = ~negs ^ toggle_s ^ negx;
     gf_copy(inv_el_m1,p->z);
     gf_cond_neg(inv_el_m1,negz);
@@ -259,11 +255,11 @@ ristretto_error_t ristretto255_point_decode (
 ) {
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
-    
+
     mask_t succ = gf_deserialize(s, ser, 1, 0);
     succ &= bool_to_mask(allow_identity) | ~gf_eq(s, ZERO);
     succ &= ~gf_lobit(s);
-    
+
     gf_sqr(s2,s);                  /* s^2 = -as^2 */
 #if IMAGINE_TWIST
     gf_sub(s2,ZERO,s2);            /* -as^2 */
@@ -281,14 +277,14 @@ ristretto_error_t ristretto255_point_decode (
     gf_add(tmp2,tmp2,tmp2);        /* 2*s*isr*den */
     gf_mul(tmp,tmp2,isr);          /* 2*s*isr^2*den */
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
-    gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
+    gf_mul(tmp,tmp2,RISTRETTO255_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
-    
+
 #if COFACTOR==8
     /* Additionally check y != 0 and x*y*isomagic nonegative */
     succ &= ~gf_eq(p->y,ZERO);
     gf_mul(tmp,p->x,p->y);
-    gf_mul(tmp2,tmp,RISTRETTO_FACTOR);
+    gf_mul(tmp2,tmp,RISTRETTO255_FACTOR);
     succ &= ~gf_lobit(tmp2);
 #endif
 
@@ -300,7 +296,7 @@ ristretto_error_t ristretto255_point_decode (
     /* Fill in z and t */
     gf_copy(p->z,ONE);
     gf_mul(p->t,p->x,p->y);
-    
+
     assert(ristretto255_point_valid(p) | ~succ);
     return ristretto_succeed_if(mask_to_bool(succ));
 }
@@ -336,7 +332,7 @@ void ristretto255_point_sub (
     gf_mul ( p->y, a, b );
     gf_mul ( p->t, b, c );
 }
-    
+
 void ristretto255_point_add (
     point_t p,
     const point_t q,
@@ -528,7 +524,7 @@ prepare_fixed_window(
     point_t tmp;
     pniels_t pn;
     int i;
-    
+
     point_double_internal(tmp, b, 0);
     pt_to_pniels(pn, tmp);
     pt_to_pniels(multiples[0], b);
@@ -537,7 +533,7 @@ prepare_fixed_window(
         add_pniels_to_pt(tmp, pn, 0);
         pt_to_pniels(multiples[i], tmp);
     }
-    
+
     ristretto_bzero(pn,sizeof(pn));
     ristretto_bzero(tmp,sizeof(tmp));
 }
@@ -552,11 +548,11 @@ void ristretto255_point_scalarmul (
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
-        
+
     scalar_t scalar1x;
     ristretto255_scalar_add(scalar1x, scalar, point_scalarmul_adjustment);
     ristretto255_scalar_halve(scalar1x,scalar1x);
-    
+
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples[1<<((int)(RISTRETTO_WINDOW_BITS)-1)];  // == NTABLE (MSVC compatibility issue)
     point_t tmp;
@@ -575,7 +571,7 @@ void ristretto255_point_scalarmul (
         bits &= WINDOW_MASK;
         mask_t inv = (bits>>(WINDOW-1))-1;
         bits ^= inv;
-    
+
         /* Add in from table.  Compute t only on last iteration. */
         constant_time_lookup(pn, multiples, sizeof(pn), NTABLE, bits & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv);
@@ -593,10 +589,10 @@ void ristretto255_point_scalarmul (
             add_pniels_to_pt(tmp, pn, i ? -1 : 0);
         }
     }
-    
+
     /* Write out the answer */
     ristretto255_point_copy(a,tmp);
-    
+
     ristretto_bzero(scalar1x,sizeof(scalar1x));
     ristretto_bzero(pn,sizeof(pn));
     ristretto_bzero(multiples,sizeof(multiples));
@@ -609,8 +605,8 @@ void ristretto255_point_double_scalarmul (
     const scalar_t scalarb,
     const point_t c,
     const scalar_t scalarc
-) {    
-    
+) {
+
     const int WINDOW = RISTRETTO_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
@@ -621,12 +617,12 @@ void ristretto255_point_double_scalarmul (
     ristretto255_scalar_halve(scalar1x,scalar1x);
     ristretto255_scalar_add(scalar2x, scalarc, point_scalarmul_adjustment);
     ristretto255_scalar_halve(scalar2x,scalar2x);
-    
+
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples1[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], multiples2[1<<((int)(RISTRETTO_WINDOW_BITS)-1)];
     // Array size above equal NTABLE (MSVC compatibility issue)
     point_t tmp;
-    prepare_fixed_window(multiples1, b, NTABLE);  
+    prepare_fixed_window(multiples1, b, NTABLE);
     prepare_fixed_window(multiples2, c, NTABLE);
 
     /* Initialize. */
@@ -647,7 +643,7 @@ void ristretto255_point_double_scalarmul (
         mask_t inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
-    
+
         /* Add in from table.  Compute t only on last iteration. */
         constant_time_lookup(pn, multiples1, sizeof(pn), NTABLE, bits1 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1);
@@ -668,10 +664,10 @@ void ristretto255_point_double_scalarmul (
         cond_neg_niels(pn->n, inv2);
         add_pniels_to_pt(tmp, pn, i?-1:0);
     }
-    
+
     /* Write out the answer */
     ristretto255_point_copy(a,tmp);
-    
+
 
     ristretto_bzero(scalar1x,sizeof(scalar1x));
     ristretto_bzero(scalar2x,sizeof(scalar2x));
@@ -688,7 +684,7 @@ void ristretto255_point_dual_scalarmul (
     const scalar_t scalar1,
     const scalar_t scalar2
 ) {
-    
+
     const int WINDOW = RISTRETTO_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
@@ -700,30 +696,30 @@ void ristretto255_point_dual_scalarmul (
     ristretto255_scalar_halve(scalar1x,scalar1x);
     ristretto255_scalar_add(scalar2x, scalar2, point_scalarmul_adjustment);
     ristretto255_scalar_halve(scalar2x,scalar2x);
-    
+
     /* Set up a precomputed table with odd multiples of b. */
     point_t multiples1[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], multiples2[1<<((int)(RISTRETTO_WINDOW_BITS)-1)], working, tmp;
     // Array sizes above equal NTABLE (MSVC compatibility issue)
 
     pniels_t pn;
-    
+
     ristretto255_point_copy(working, b);
 
     /* Initialize. */
     int i,j;
-    
+
     for (i=0; i<NTABLE; i++) {
         ristretto255_point_copy(multiples1[i], ristretto255_point_identity);
         ristretto255_point_copy(multiples2[i], ristretto255_point_identity);
     }
 
-    for (i=0; i<SCALAR_BITS; i+=WINDOW) {   
+    for (i=0; i<SCALAR_BITS; i+=WINDOW) {
         if (i) {
             for (j=0; j<WINDOW-1; j++)
                 point_double_internal(working, working, -1);
             point_double_internal(working, working, 0);
         }
-        
+
         /* Fetch another block of bits */
         word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
                bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
@@ -737,7 +733,7 @@ void ristretto255_point_dual_scalarmul (
         mask_t inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
-        
+
         pt_to_pniels(pn, working);
 
         constant_time_lookup(tmp, multiples1, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
@@ -745,26 +741,26 @@ void ristretto255_point_dual_scalarmul (
         /* add_pniels_to_pt(multiples1[bits1 & WINDOW_T_MASK], pn, 0); */
         add_pniels_to_pt(tmp, pn, 0);
         constant_time_insert(multiples1, tmp, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
-        
-        
+
+
         constant_time_lookup(tmp, multiples2, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1^inv2);
         /* add_pniels_to_pt(multiples2[bits2 & WINDOW_T_MASK], pn, 0); */
         add_pniels_to_pt(tmp, pn, 0);
         constant_time_insert(multiples2, tmp, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
     }
-    
+
     if (NTABLE > 1) {
         ristretto255_point_copy(working, multiples1[NTABLE-1]);
         ristretto255_point_copy(tmp    , multiples2[NTABLE-1]);
-    
+
         for (i=NTABLE-1; i>1; i--) {
             ristretto255_point_add(multiples1[i-1], multiples1[i-1], multiples1[i]);
             ristretto255_point_add(multiples2[i-1], multiples2[i-1], multiples2[i]);
             ristretto255_point_add(working, working, multiples1[i-1]);
             ristretto255_point_add(tmp,     tmp,     multiples2[i-1]);
         }
-    
+
         ristretto255_point_add(multiples1[0], multiples1[0], multiples1[1]);
         ristretto255_point_add(multiples2[0], multiples2[0], multiples2[1]);
         point_double_internal(working, working, 0);
@@ -791,7 +787,7 @@ ristretto_bool_t ristretto255_point_eq ( const point_t p, const point_t q ) {
     gf_mul ( a, p->y, q->x );
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
-    
+
     #if (COFACTOR == 8)
         gf_mul ( a, p->y, q->y );
         gf_mul ( b, q->x, p->x );
@@ -802,12 +798,12 @@ ristretto_bool_t ristretto255_point_eq ( const point_t p, const point_t q ) {
             * But because of the *i twist, it's actually
             * (x,y) <-> (iy,ix)
             */
-    
+
            /* No code, just a comment. */
         #endif
         succ |= gf_eq(a,b);
     #endif
-    
+
     return mask_to_bool(succ);
 }
 
@@ -875,7 +871,7 @@ static void gf_batch_invert (
 ) {
     gf t1;
     assert(n>1);
-  
+
     gf_copy(out[1], in[0]);
     int i;
     for (i=1; i<(int) (n-1); i++) {
@@ -907,34 +903,34 @@ static void batch_normalize_niels (
         gf_mul(product, table[i]->a, zis[i]);
         gf_strong_reduce(product);
         gf_copy(table[i]->a, product);
-        
+
         gf_mul(product, table[i]->b, zis[i]);
         gf_strong_reduce(product);
         gf_copy(table[i]->b, product);
-        
+
         gf_mul(product, table[i]->c, zis[i]);
         gf_strong_reduce(product);
         gf_copy(table[i]->c, product);
     }
-    
+
     ristretto_bzero(product,sizeof(product));
 }
 
 void ristretto255_precompute (
     precomputed_s *table,
     const point_t base
-) { 
+) {
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     assert(n*t*s >= SCALAR_BITS);
-  
+
     point_t working, start, doubles[COMBS_T-1];
     ristretto255_point_copy(working, base);
     pniels_t pn_tmp;
-  
+
     gf zs[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)], zis[(unsigned int)(COMBS_N)<<(unsigned int)(COMBS_T-1)];
-  
+
     unsigned int i,j,k;
-    
+
     /* Compute n tables */
     for (i=0; i<n; i++) {
 
@@ -960,13 +956,13 @@ void ristretto255_precompute (
             pt_to_pniels(pn_tmp, start);
             memcpy(table->table[idx], pn_tmp->n, sizeof(pn_tmp->n));
             gf_copy(zs[idx], pn_tmp->z);
-			
+
             if (j >= (1u<<(t-1)) - 1) break;
             int delta = (j+1) ^ ((j+1)>>1) ^ gray;
 
             for (k=0; delta>1; k++)
                 delta >>=1;
-            
+
             if (gray & (1<<k)) {
                 ristretto255_point_add(start, start, doubles[k]);
             } else {
@@ -974,9 +970,9 @@ void ristretto255_precompute (
             }
         }
     }
-    
+
     batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
-    
+
     ristretto_bzero(zs,sizeof(zs));
     ristretto_bzero(zis,sizeof(zis));
     ristretto_bzero(pn_tmp,sizeof(pn_tmp));
@@ -1003,26 +999,26 @@ void ristretto255_precomputed_scalarmul (
     int i;
     unsigned j,k;
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
-    
+
     scalar_t scalar1x;
     ristretto255_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
     ristretto255_scalar_halve(scalar1x,scalar1x);
-    
+
     niels_t ni;
-    
+
     for (i=s-1; i>=0; i--) {
         if (i != (int)s-1) point_double_internal(out,out,0);
-        
+
         for (j=0; j<n; j++) {
             int tab = 0;
-         
+
             for (k=0; k<t; k++) {
                 unsigned int bit = i + s*(k + j*t);
                 if (bit < SCALAR_BITS) {
                     tab |= (scalar1x->limb[bit/WBITS] >> (bit%WBITS) & 1) << k;
                 }
             }
-            
+
             mask_t invert = (tab>>(t-1))-1;
             tab ^= invert;
             tab &= (1<<(t-1)) - 1;
@@ -1037,7 +1033,7 @@ void ristretto255_precomputed_scalarmul (
             }
         }
     }
-    
+
     ristretto_bzero(ni,sizeof(ni));
     ristretto_bzero(scalar1x,sizeof(scalar1x));
 }
@@ -1073,7 +1069,7 @@ void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[RISTRETTO255_PUBLIC_BYTES],
     const point_t p
 ) {
-    
+
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     point_t q;
@@ -1082,7 +1078,7 @@ void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
 #else
     ristretto255_point_copy(q,p);
 #endif
-    
+
 #if EDDSA_USE_SIGMA_ISOGENY
     {
         /* Use 4-isogeny like ed25519:
@@ -1107,7 +1103,7 @@ void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
         gf_mul ( y, u, t ); // (x^2+y^2)(2z^2-y^2+x^2)
         gf_mul ( u, z, t );
         gf_copy( z, u );
-        gf_mul ( u, x, RISTRETTO_FACTOR );
+        gf_mul ( u, x, RISTRETTO255_FACTOR );
 #if IMAGINE_TWIST
         gf_mul_i( x, u );
 #else
@@ -1136,7 +1132,7 @@ void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
         gf_sub ( y, y, u );
         gf_sub ( z, t, x );
         gf_sqr ( x, q->z );
-        gf_add ( t, x, x); 
+        gf_add ( t, x, x);
         gf_sub ( t, t, z);
         gf_mul ( x, t, y );
         gf_mul ( y, z, u );
@@ -1148,7 +1144,7 @@ void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
     gf_invert(z,z,1);
     gf_mul(t,x,z);
     gf_mul(x,y,z);
-    
+
     /* Encode */
     enc[RISTRETTO255_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
@@ -1171,7 +1167,7 @@ ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
 
     mask_t low = ~word_is_zero(enc2[RISTRETTO255_PRIVATE_BYTES-1] & 0x80);
     enc2[RISTRETTO255_PRIVATE_BYTES-1] &= ~0x80;
-    
+
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
 #if 7 == 0
     succ &= word_is_zero(enc2[RISTRETTO255_PRIVATE_BYTES-1]);
@@ -1187,14 +1183,14 @@ ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
         gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
     #endif
     gf_sub(p->t,ONE,p->t); /* denom = 1-dy^2 or 1-d + dy^2 */
-    
+
     gf_mul(p->x,p->z,p->t);
     succ &= gf_isr(p->t,p->x); /* 1/sqrt(num * denom) */
-    
+
     gf_mul(p->x,p->t,p->z); /* sqrt(num / denom) */
     gf_cond_neg(p->x,gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
-  
+
     #if EDDSA_USE_SIGMA_ISOGENY
     {
        /* Use 4-isogeny like ed25519:
@@ -1219,7 +1215,7 @@ ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
         gf_add ( p->z, p->x, p->x );
         gf_sub ( c, p->z, p->t ); // 2z^2 - y^2 + x^2
         gf_div_i ( a, c );
-        gf_mul ( c, a, RISTRETTO_FACTOR );
+        gf_mul ( c, a, RISTRETTO255_FACTOR );
         gf_mul ( p->x, b, p->t); // (2xy)(y^2-x^2)
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
@@ -1228,7 +1224,7 @@ ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
         ristretto_bzero(b,sizeof(b));
         ristretto_bzero(c,sizeof(c));
         ristretto_bzero(d,sizeof(d));
-    } 
+    }
     #elif IMAGINE_TWIST
     {
         gf_mul(p->t,p->x,SQRT_MINUS_ONE);
@@ -1259,10 +1255,10 @@ ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
         ristretto_bzero(d,sizeof(d));
     }
     #endif
-    
+
     ristretto_bzero(enc2,sizeof(enc2));
     assert(ristretto255_point_valid(p) || ~succ);
-    
+
     return ristretto_succeed_if(mask_to_bool(succ));
 }
 
@@ -1281,7 +1277,7 @@ static int recode_wnaf (
 ) {
     unsigned int table_size = SCALAR_BITS/(table_bits+1) + 3;
     int position = table_size - 1; /* at the end */
-    
+
     /* place the end marker */
     control[position].power = -1;
     control[position].addend = 0;
@@ -1291,7 +1287,7 @@ static int recode_wnaf (
      * in the actual code that uses it, all for an expected reduction of like 1/5 op.
      * Probably not worth it.
      */
-    
+
     uint64_t current = scalar->limb[0] & 0xFFFF;
     uint32_t mask = (1<<(table_bits+1))-1;
 
@@ -1302,7 +1298,7 @@ static int recode_wnaf (
             /* Refill the 16 high bits of current */
             current += (uint32_t)((scalar->limb[w/B_OVER_16]>>(16*(w%B_OVER_16)))<<16);
         }
-        
+
         while (current & 0xFFFF) {
             assert(position >= 0);
             uint32_t pos = __builtin_ctz((uint32_t)current), odd = (uint32_t)current >> pos;
@@ -1316,7 +1312,7 @@ static int recode_wnaf (
         current >>= 16;
     }
     assert(current==0);
-    
+
     position++;
     unsigned int n = table_size - position;
     unsigned int i;
@@ -1349,7 +1345,7 @@ prepare_wnaf_table(
         add_pniels_to_pt(tmp, twop,0);
         pt_to_pniels(output[i], tmp);
     }
-    
+
     ristretto255_point_destroy(tmp);
     ristretto_bzero(twop,sizeof(twop));
 }
@@ -1377,7 +1373,7 @@ void ristretto255_precompute_wnafs (
         gf_copy(zs[i], tmp[i]->z);
     }
     batch_normalize_niels(out, (const gf *)zs, zis, 1<<RISTRETTO_WNAF_FIXED_TABLE_BITS);
-    
+
     ristretto_bzero(tmp,sizeof(tmp));
     ristretto_bzero(zs,sizeof(zs));
     ristretto_bzero(zis,sizeof(zis));
@@ -1393,13 +1389,13 @@ void ristretto255_base_double_scalarmul_non_secret (
         table_bits_pre = RISTRETTO_WNAF_FIXED_TABLE_BITS;
     struct smvt_control control_var[SCALAR_BITS/((int)(RISTRETTO_WNAF_VAR_TABLE_BITS)+1)+3];
     struct smvt_control control_pre[SCALAR_BITS/((int)(RISTRETTO_WNAF_FIXED_TABLE_BITS)+1)+3];
-    
+
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
-  
+
     pniels_t precmp_var[1<<(int)(RISTRETTO_WNAF_VAR_TABLE_BITS)];
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
-  
+
     int contp=0, contv=0, i = control_var[0].power;
 
     if (i < 0) {
@@ -1417,7 +1413,7 @@ void ristretto255_base_double_scalarmul_non_secret (
         niels_to_pt(combo, ristretto255_wnaf_base[control_pre[0].addend >> 1]);
         contp++;
     }
-    
+
     for (i--; i >= 0; i--) {
         int cv = (i==control_var[contv].power), cp = (i==control_pre[contp].power);
         point_double_internal(combo,combo,i && !(cv||cp));
@@ -1444,7 +1440,7 @@ void ristretto255_base_double_scalarmul_non_secret (
             contp++;
         }
     }
-    
+
     /* This function is non-secret, but whatever this is cheap. */
     ristretto_bzero(control_var,sizeof(control_var));
     ristretto_bzero(control_pre,sizeof(control_pre));

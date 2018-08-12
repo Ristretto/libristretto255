@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Field-specific code for 2^255 - 19.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 
 #ifndef __P25519_F_FIELD_H__

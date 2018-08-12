@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief A group of prime order p, based on Curve25519.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 
 #ifndef __RISTRETTO255_POINT_H__
@@ -64,7 +61,7 @@ typedef struct ristretto255_point_s {
 struct ristretto255_precomputed_s;
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-typedef struct ristretto255_precomputed_s ristretto255_precomputed_s; 
+typedef struct ristretto255_precomputed_s ristretto255_precomputed_s;
 
 /** Size and alignment of precomputed point tables. */
 RISTRETTO_API_VIS extern const size_t ristretto255_sizeof_precomputed_s, ristretto255_alignof_precomputed_s;
@@ -140,7 +137,7 @@ void RISTRETTO_API_VIS ristretto255_scalar_decode_long (
     const unsigned char *ser,
     size_t ser_len
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
-    
+
 /**
  * @brief Serialize a scalar to wire format.
  *
@@ -151,7 +148,7 @@ void RISTRETTO_API_VIS ristretto255_scalar_encode (
     unsigned char ser[RISTRETTO255_SCALAR_BYTES],
     const ristretto255_scalar_t s
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE RISTRETTO_NOINLINE;
-        
+
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
  * @param [in] a One scalar.
@@ -170,7 +167,7 @@ void RISTRETTO_API_VIS ristretto255_scalar_add (
  * @param [in] b Another scalar.
  * @retval RISTRETTO_TRUE The scalars are equal.
  * @retval RISTRETTO_FALSE The scalars are not equal.
- */    
+ */
 ristretto_bool_t RISTRETTO_API_VIS ristretto255_scalar_eq (
     const ristretto255_scalar_t a,
     const ristretto255_scalar_t b
@@ -181,7 +178,7 @@ ristretto_bool_t RISTRETTO_API_VIS ristretto255_scalar_eq (
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
  * @param [out] out a-b.
- */  
+ */
 void RISTRETTO_API_VIS ristretto255_scalar_sub (
     ristretto255_scalar_t out,
     const ristretto255_scalar_t a,
@@ -193,13 +190,13 @@ void RISTRETTO_API_VIS ristretto255_scalar_sub (
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
  * @param [out] out a*b.
- */  
+ */
 void RISTRETTO_API_VIS ristretto255_scalar_mul (
     ristretto255_scalar_t out,
     const ristretto255_scalar_t a,
     const ristretto255_scalar_t b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
-        
+
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
 * @param [in] a A scalar.
@@ -215,7 +212,7 @@ void RISTRETTO_API_VIS ristretto255_scalar_halve (
  * @param [in] a A scalar.
  * @param [out] out 1/a.
  * @return RISTRETTO_SUCCESS The input is nonzero.
- */  
+ */
 ristretto_error_t RISTRETTO_API_VIS ristretto255_scalar_invert (
     ristretto255_scalar_t out,
     const ristretto255_scalar_t a
@@ -238,7 +235,7 @@ static inline void RISTRETTO_NONNULL ristretto255_scalar_copy (
  * @brief Set a scalar to an unsigned 64-bit integer.
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
- */  
+ */
 void RISTRETTO_API_VIS ristretto255_scalar_set_unsigned (
     ristretto255_scalar_t out,
     uint64_t a
@@ -344,7 +341,7 @@ void RISTRETTO_API_VIS ristretto255_point_sub (
     const ristretto255_point_t a,
     const ristretto255_point_t b
 ) RISTRETTO_NONNULL;
-    
+
 /**
  * @brief Negate a point to produce another point.  The input
  * and output points can use the same memory.
@@ -446,7 +443,7 @@ void RISTRETTO_API_VIS ristretto255_point_double_scalarmul (
     const ristretto255_point_t base2,
     const ristretto255_scalar_t scalar2
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
-    
+
 /**
  * Multiply one base point by two scalars:
  *
@@ -583,7 +580,7 @@ void RISTRETTO_API_VIS ristretto255_point_debugging_pscale (
  * (mod q) results in the negative point.  This is the same as Elligator.
  *
  * This function isn't quite indifferentiable from a random oracle.
- * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE. 
+ * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE.
  * Furthermore, calling it twice with independent seeds and adding the results
  * is indifferentiable from a random oracle.
  *
@@ -603,7 +600,7 @@ ristretto255_point_from_hash_nonuniform (
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
- */ 
+ */
 void RISTRETTO_API_VIS ristretto255_point_from_hash_uniform (
     ristretto255_point_t pt,
     const unsigned char hashed_data[2*RISTRETTO255_HASH_BYTES]

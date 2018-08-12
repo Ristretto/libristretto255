@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Ristretto255 high-level functions.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #include "word.h"
 #include "constant_time.h"
@@ -52,7 +49,7 @@ static RISTRETTO_NOINLINE void sc_subx(
         chain >>= WBITS;
     }
     ristretto_word_t borrow = chain+extra; /* = 0 or -1 */
-    
+
     chain = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + out->limb[i]) + (p->limb[i] & borrow);
@@ -69,11 +66,11 @@ static RISTRETTO_NOINLINE void sc_montmul (
     unsigned int i,j;
     ristretto_word_t accum[SCALAR_LIMBS+1] = {0};
     ristretto_word_t hi_carry = 0;
-    
+
     for (i=0; i<SCALAR_LIMBS; i++) {
         ristretto_word_t mand = a->limb[i];
         const ristretto_word_t *mier = b->limb;
-        
+
         ristretto_dword_t chain = 0;
         for (j=0; j<SCALAR_LIMBS; j++) {
             chain += ((ristretto_dword_t)mand)*mier[j] + accum[j];
@@ -81,7 +78,7 @@ static RISTRETTO_NOINLINE void sc_montmul (
             chain >>= WBITS;
         }
         accum[j] = chain;
-        
+
         mand = accum[0] * MONTGOMERY_FACTOR;
         chain = 0;
         mier = sc_p->limb;
@@ -95,7 +92,7 @@ static RISTRETTO_NOINLINE void sc_montmul (
         accum[j-1] = chain;
         hi_carry = chain >> WBITS;
     }
-    
+
     sc_subx(out, accum, sc_p, sc_p, hi_carry);
 }
 
@@ -132,26 +129,26 @@ ristretto_error_t ristretto255_scalar_invert (
     for (i=1; i<=LAST; i++) {
         sc_montmul(precmp[i],precmp[i-1],precmp[LAST]);
     }
-    
+
     /* Sliding window */
     unsigned residue = 0, trailing = 0, started = 0;
     for (i=SCALAR_BITS-1; i>=-SCALAR_WINDOW_BITS; i--) {
-        
+
         if (started) sc_montsqr(out,out);
-        
+
         ristretto_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
         if (i >= 0 && i<WBITS) {
             assert(w >= 2);
             w-=2;
         }
-        
+
         residue = (residue<<1) | ((w>>(i%WBITS))&1);
         if (residue>>SCALAR_WINDOW_BITS != 0) {
             assert(trailing == 0);
             trailing = residue;
             residue = 0;
         }
-        
+
         if (trailing > 0 && (trailing & ((1<<SCALAR_WINDOW_BITS)-1)) == 0) {
             if (started) {
                 sc_montmul(out,out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
@@ -162,11 +159,11 @@ ristretto_error_t ristretto255_scalar_invert (
             trailing = 0;
         }
         trailing <<= 1;
-        
+
     }
     assert(residue==0);
     assert(trailing==0);
-    
+
     /* Demontgomerize */
     sc_montmul(out,out,ristretto255_scalar_one);
     ristretto_bzero(precmp, sizeof(precmp));
@@ -250,9 +247,9 @@ ristretto_error_t ristretto255_scalar_decode(
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
     /* Here accum == 0 or -1 */
-    
+
     ristretto255_scalar_mul(s,s,ristretto255_scalar_one); /* ham-handed reduce */
-    
+
     return ristretto_succeed_if(~word_is_zero(accum));
 }
 
@@ -271,13 +268,13 @@ void ristretto255_scalar_decode_long(
         ristretto255_scalar_copy(s, ristretto255_scalar_zero);
         return;
     }
-    
+
     size_t i;
     scalar_t t1, t2;
 
     i = ser_len - (ser_len%SCALAR_SER_BYTES);
     if (i==ser_len) i -= SCALAR_SER_BYTES;
-    
+
     scalar_decode_short(t1, &ser[i], ser_len-i);
 
     if (ser_len == sizeof(scalar_t)) {

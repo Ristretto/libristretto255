@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Elligator high-level functions.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #include "word.h"
 #include "field.h"
@@ -22,8 +19,7 @@
 #define COFACTOR 8
 static const int EDWARDS_D = -121665;
 
-#define RISTRETTO_FACTOR RISTRETTO255_FACTOR
-extern const gf RISTRETTO_FACTOR;
+extern const gf RISTRETTO255_FACTOR;
 
 /* End of template stuff */
 extern mask_t ristretto255_deisogenize (
@@ -53,21 +49,21 @@ void ristretto255_point_from_hash_nonuniform (
     gf_add(a,b,ONE);
     gf_sub(b,b,r);
     gf_mul(c,a,b);
-    
+
     /* compute N := (r+1)(a-2d) */
     gf_add(a,r,ONE);
     gf_mulw(N,a,1-2*EDWARDS_D);
-    
+
     /* e = +-sqrt(1/ND) or +-r0 * sqrt(qnr/ND) */
     gf_mul(a,c,N);
     mask_t square = gf_isr(b,a);
     gf_cond_sel(c,r0,ONE,square); /* r? = square ? 1 : r0 */
     gf_mul(e,b,c);
-    
+
     /* s@a = +-|N.e| */
     gf_mul(a,N,e);
     gf_cond_neg(a,gf_lobit(a) ^ ~square);
-    
+
     /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
     gf_mulw(c,e,1-2*EDWARDS_D); /* (a-2d)e */
     gf_sqr(b,c);
@@ -82,7 +78,7 @@ void ristretto255_point_from_hash_nonuniform (
     gf_mul(c,a,SQRT_MINUS_ONE);
     gf_copy(a,c);
 #endif
-    
+
     gf_sqr(c,a); /* s^2 */
     gf_add(a,a,a); /* 2s */
     gf_add(e,c,ONE);
@@ -91,7 +87,7 @@ void ristretto255_point_from_hash_nonuniform (
     gf_sub(a,ONE,c);
     gf_mul(p->y,e,a); /* (1+s^2)(1-s^2) */
     gf_mul(p->z,a,b); /* (1-s^2)t */
-    
+
     assert(ristretto255_point_valid(p));
 }
 
@@ -129,16 +125,16 @@ ristretto255_invert_elligator_nonuniform (
         sgn_ed_T = -(hint>>3 & 1);
     gf a,b,c;
     ristretto255_deisogenize(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
-    
+
     mask_t is_identity = gf_eq(p->t,ZERO);
 #if COFACTOR==4
     gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
 #elif IMAGINE_TWIST
     /* Terrible, terrible special casing due to lots of 0/0 is deisogenize
-     * Basically we need to generate -D and +- i*RISTRETTO_FACTOR
+     * Basically we need to generate -D and +- i*RISTRETTO255_FACTOR
      */
-    gf_mul_i(a,RISTRETTO_FACTOR);
+    gf_mul_i(a,RISTRETTO255_FACTOR);
     gf_cond_sel(b,b,ONE,is_identity);
     gf_cond_neg(a,sgn_altx);
     gf_cond_sel(c,c,a,is_identity & sgn_ed_T);
@@ -148,7 +144,7 @@ ristretto255_invert_elligator_nonuniform (
 #else
 #error "Different special-casing goes here!"
 #endif
-    
+
 #if IMAGINE_TWIST
     gf_mulw(a,b,-EDWARDS_D);
 #else
@@ -163,19 +159,19 @@ ristretto255_invert_elligator_nonuniform (
     mask_t succ = gf_isr(c,b);
     succ |= gf_eq(b,ZERO);
     gf_mul(b,c,a);
-    
+
 #if 255 == 8*SER_BYTES + 1 /* p521. */
 #error "this won't work because it needs to adjust high bit, not low bit"
     sgn_r0 = 0;
 #endif
-    
+
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
     /* Eliminate duplicate values for identity ... */
     succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
     // #if COFACTOR == 8
     //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
     // #endif
-    
+
     #if 255 == 8*SER_BYTES + 1 /* p521 */
         gf_serialize(recovered_hash,b,0);
     #else

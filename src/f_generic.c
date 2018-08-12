@@ -7,16 +7,13 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Generic arithmetic which has to be compiled per field.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #include "field.h"
 
 static const gf MODULUS = {FIELD_LITERAL(
     0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
 )};
-    
+
 #if P_MOD_8 == 5
     const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
         0x61b274a0ea0b0, 0x0d5a5fc8f189d, 0x7ef5e9cbd0c60, 0x78595a6804c9e, 0x2b8324804fc1d
@@ -29,7 +26,7 @@ void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
     gf_copy(red, x);
     gf_strong_reduce(red);
     if (!with_hibit) { assert(gf_hibit(red) == 0); }
-    
+
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     UNROLL for (unsigned int i=0; i<(with_hibit ? X_SER_BYTES : SER_BYTES); i++) {
