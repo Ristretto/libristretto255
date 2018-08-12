@@ -8,18 +8,16 @@
  *
  * @brief Elligator high-level functions.
  */
+
 #include "word.h"
 #include "field.h"
-#include <ristretto255/common.h>
-#include <ristretto255/point.h>
+#include <ristretto255.h>
 
-/* Template stuff */
 #define point_t ristretto255_point_t
 static const int EDWARDS_D = -121665;
 
 extern const gf RISTRETTO255_FACTOR;
 
-/* End of template stuff */
 extern mask_t ristretto255_deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,

@@ -8,14 +8,14 @@
  *
  * @brief Ristretto255 global constant table precomputation.
  */
+
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "field.h"
 #include "f_field.h"
-#include "ristretto255/common.h"
-#include "ristretto255/point.h"
+#include <ristretto255.h>
 
 static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
     0xe2, 0xf2, 0xae, 0x0a, 0x6a, 0xbc, 0x4e, 0x71, 0xa8, 0x84, 0xa9, 0x61, 0xc5, 0x00, 0x51, 0x5f, 0x58, 0xe3, 0x0b, 0x6a, 0xa5, 0x82, 0xdd, 0x8d, 0xb6, 0xa6, 0x59, 0x45, 0xe0, 0x8d, 0x2d, 0x76
@@ -86,8 +86,7 @@ int main(int argc, char **argv) {
 
     printf("/** @warning: this file was automatically generated. */\n");
     printf("#include \"field.h\"\n\n");
-    printf("#include <ristretto255/common.h>\n\n");
-    printf("#include <ristretto255/point.h>\n\n");
+    printf("#include <ristretto255.h>\n\n");
     printf("#define ristretto255__id ristretto255_##_id\n");
 
     output = (const gf_s *)real_point_base;
