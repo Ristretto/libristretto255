@@ -1,0 +1,9 @@
+# The C implementation is generated using Python scripts
+language: python
+
+script:
+  - make
+
+branches:
+  only:
+    - master
