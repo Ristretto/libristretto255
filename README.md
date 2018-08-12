@@ -1,4 +1,7 @@
-# libristretto255
+# libristretto255 [![Build Status][build-image]][build-link]
+
+[build-image]: https://travis-ci.org/Ristretto/libristretto255.svg?branch=master
+[build-link]: https://travis-ci.org/Ristretto/libristretto255
 
 <img width="200" height="200" src="https://ristretto.group/theme/ristretto-sm.png">
 
