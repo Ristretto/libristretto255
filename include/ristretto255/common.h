@@ -26,17 +26,10 @@ extern "C" {
 #   define __attribute__(x)        // Turn off attribute code
 #   define __attribute(x)
 #   define __restrict__ __restrict  // Use MSVC restrict code
-#   if defined _DLL
-#       define RISTRETTO_API_VIS __declspec(dllexport)  // MSVC for visibility
-#   else
-#       define RISTRETTO_API_VIS __declspec(dllimport)
-#   endif
-
 //#   define RISTRETTO_NOINLINE __declspec(noinline) // MSVC for noinline
 //#   define RISTRETTO_INLINE __forceinline // MSVC for always inline
 //#   define RISTRETTO_WARN_UNUSED _Check_return_
 #else // MSVC
-#define RISTRETTO_API_VIS __attribute__((visibility("default")))
 #define RISTRETTO_API_IMPORT
 #endif
 
@@ -113,13 +106,13 @@ ristretto_successful(ristretto_error_t e) {
 }
 
 /** Overwrite data with zeros.  Uses memset_s if available. */
-void RISTRETTO_API_VIS ristretto_bzero (
+void ristretto_bzero (
     void *data,
     size_t size
 ) RISTRETTO_NONNULL;
 
 /** Compare two buffers, returning RISTRETTO_TRUE if they are equal. */
-ristretto_bool_t RISTRETTO_API_VIS ristretto_memeq (
+ristretto_bool_t ristretto_memeq (
     const void *data1,
     const void *data2,
     size_t size

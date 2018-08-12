@@ -1,0 +1,14 @@
+branches:
+  only:
+    - master
+
+image: Visual Studio 2017
+
+platform:
+  - x64
+
+install:
+  - set PATH=C:\msys64\usr\bin;%PATH%
+
+build_script:
+  - make
