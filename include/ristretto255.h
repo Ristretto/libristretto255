@@ -58,7 +58,7 @@
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */
-void RISTRETTO_API_VIS ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
+void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[RISTRETTO255_PUBLIC_BYTES],
     const ristretto255_point_t p
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
@@ -71,7 +71,7 @@ void RISTRETTO_API_VIS ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */
-ristretto_error_t RISTRETTO_API_VIS ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
+ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
     ristretto255_point_t p,
     const uint8_t enc[RISTRETTO255_PUBLIC_BYTES]
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;

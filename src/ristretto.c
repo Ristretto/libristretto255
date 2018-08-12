@@ -1352,13 +1352,13 @@ prepare_wnaf_table(
 
 extern const gf ristretto255_precomputed_wnaf_as_fe[];
 static const niels_t *ristretto255_wnaf_base = (const niels_t *)ristretto255_precomputed_wnaf_as_fe;
-const size_t ristretto255_sizeof_precomputed_wnafs __attribute((visibility("hidden")))
+const size_t ristretto255_sizeof_precomputed_wnafs
     = sizeof(niels_t)<<RISTRETTO_WNAF_FIXED_TABLE_BITS;
 
 void ristretto255_precompute_wnafs (
     niels_t out[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS],
     const point_t base
-) __attribute__ ((visibility ("hidden")));
+);
 
 void ristretto255_precompute_wnafs (
     niels_t out[1<<RISTRETTO_WNAF_FIXED_TABLE_BITS],
