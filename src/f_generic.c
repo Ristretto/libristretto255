@@ -14,11 +14,9 @@ static const gf MODULUS = {FIELD_LITERAL(
     0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
 )};
 
-#if P_MOD_8 == 5
-    const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
-        0x61b274a0ea0b0, 0x0d5a5fc8f189d, 0x7ef5e9cbd0c60, 0x78595a6804c9e, 0x2b8324804fc1d
-    )};
-#endif
+const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
+    0x61b274a0ea0b0, 0x0d5a5fc8f189d, 0x7ef5e9cbd0c60, 0x78595a6804c9e, 0x2b8324804fc1d
+)};
 
 /** Serialize to wire format. */
 void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {

@@ -1,5 +1,5 @@
 /**
- * @file curve25519/ristretto_gen_tables.c
+ * @file ristretto_gen_tables.c
  * @author Mike Hamburg
  *
  * @copyright

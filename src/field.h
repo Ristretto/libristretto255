@@ -13,7 +13,7 @@
 #include "constant_time.h"
 #include "f_field.h"
 #include <string.h>
-    
+
 /** Square x, n times. */
 static RISTRETTO_INLINE void gf_sqrn (
     gf_s *__restrict__ y,
@@ -81,32 +81,18 @@ gf_cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
 }
 
 static RISTRETTO_INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
-#if P_MOD_8 == 5
     /* r = QNR * r0^2 */
     gf_mul(out,x,SQRT_MINUS_ONE);
-#elif P_MOD_8 == 3 || P_MOD_8 == 7
-    gf_sub(out,ZERO,x);
-#else
-    #error "Only supporting p=3,5,7 mod 8"
-#endif
 }
 
 static RISTRETTO_INLINE void gf_div_qnr(gf_s *__restrict__ out, const gf x) {
-#if P_MOD_8 == 5
     /* r = QNR * r0^2 */
     gf_mul(out,x,SQRT_MINUS_ONE);
     gf_sub(out,ZERO,out);
-#elif P_MOD_8 == 3 || P_MOD_8 == 7
-    gf_sub(out,ZERO,x);
-#else
-    #error "Only supporting p=3,5,7 mod 8"
-#endif
 }
 
-#if P_MOD_8 == 5
 #define gf_mul_i gf_mul_qnr
 #define gf_div_i gf_div_qnr
-#endif
 
 
 #endif // __GF_H__
