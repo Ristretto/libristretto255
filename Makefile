@@ -33,8 +33,6 @@ ifeq ($(UNAME),Darwin)
 GENFLAGS += -mmacosx-version-min=$(MACOSX_VERSION_MIN)
 endif
 
-TODAY = $(shell date "+%Y-%m-%d")
-
 ARCHFLAGS ?= -march=native
 
 ifeq ($(CC),clang)
@@ -82,7 +80,7 @@ src/ristretto_tables.c: $(BUILD_IBIN)/ristretto_gen_tables
 	./$< > $@ || (rm $@; exit 1)
 
 # The libristretto255 library
-lib: $(BUILD_LIB)/libristretto255.so
+lib: $(BUILD_LIB)/libristretto255.so $(BUILD_LIB)/libristretto255.a
 
 $(BUILD_LIB)/libristretto255.so: $(BUILD_LIB)/libristretto255.so.1
 	ln -sf `basename $^` $@
@@ -99,6 +97,9 @@ else
 	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -Wl,--gc-sections -o $@ $(LIBCOMPONENTS)
 	strip --discard-all $@
 endif
+
+$(BUILD_LIB)/libristretto255.a: $(LIBCOMPONENTS)
+	ar rcs $@ $(LIBCOMPONENTS)
 
 $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
