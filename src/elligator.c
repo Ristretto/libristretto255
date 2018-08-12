@@ -19,8 +19,7 @@
 #define COFACTOR 8
 static const int EDWARDS_D = -121665;
 
-#define RISTRETTO_FACTOR RISTRETTO255_FACTOR
-extern const gf RISTRETTO_FACTOR;
+extern const gf RISTRETTO255_FACTOR;
 
 /* End of template stuff */
 extern mask_t ristretto255_deisogenize (
@@ -133,9 +132,9 @@ ristretto255_invert_elligator_nonuniform (
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
 #elif IMAGINE_TWIST
     /* Terrible, terrible special casing due to lots of 0/0 is deisogenize
-     * Basically we need to generate -D and +- i*RISTRETTO_FACTOR
+     * Basically we need to generate -D and +- i*RISTRETTO255_FACTOR
      */
-    gf_mul_i(a,RISTRETTO_FACTOR);
+    gf_mul_i(a,RISTRETTO255_FACTOR);
     gf_cond_sel(b,b,ONE,is_identity);
     gf_cond_neg(a,sgn_altx);
     gf_cond_sel(c,c,a,is_identity & sgn_ed_T);

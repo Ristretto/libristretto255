@@ -58,8 +58,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
     SC_LIMB(0x977f4a4775473484), SC_LIMB(0x6de72ae98b3ab623), SC_LIMB(0xffffffffffffffff), SC_LIMB(0x0fffffffffffffff)
 }}};
 
-#define RISTRETTO_FACTOR RISTRETTO255_FACTOR
-const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
+const gf RISTRETTO255_FACTOR = {FIELD_LITERAL(
     0x702557fa2bf03, 0x514b7d1a82cc6, 0x7f89efd8b43a7, 0x1aef49ec23700, 0x079376fa30500
 )};
 
@@ -177,7 +176,7 @@ void ristretto255_deisogenize (
     gf_mulw(t2,t1,-1-TWISTED_D); /* -x^2 * (a-d) * num */
     gf_isr(t1,t2);    /* t1 = isr */
     gf_mul(t2,t1,t3); /* t2 = ratio */
-    gf_mul(t4,t2,RISTRETTO_FACTOR);
+    gf_mul(t4,t2,RISTRETTO255_FACTOR);
     mask_t negx = gf_lobit(t4) ^ toggle_altx;
     gf_cond_neg(t2, negx);
     gf_mul(t3,t2,p->z);
@@ -203,7 +202,7 @@ void ristretto255_deisogenize (
     gf_mulw(t1,t4,-1-TWISTED_D);
     gf_isr(t4,t1);         /* isqrt(num*(a-d)*den^2) */
     gf_mul(t1,t2,t4);
-    gf_mul(t2,t1,RISTRETTO_FACTOR); /* t2 = "iden" in ristretto.sage */
+    gf_mul(t2,t1,RISTRETTO255_FACTOR); /* t2 = "iden" in ristretto.sage */
     gf_mul(t1,t3,t4);                 /* t1 = "inum" in ristretto.sage */
 
     /* Calculate altxy = iden*inum*i*t^2*(d-a) */
@@ -219,7 +218,7 @@ void ristretto255_deisogenize (
     gf_mul_i(t4,p->x);
     gf_cond_sel(t4,p->y,t4,rotate);  /* t4 = "fac" = ix if rotate, else y */
 
-    gf_mul_i(t5,RISTRETTO_FACTOR); /* t5 = imi */
+    gf_mul_i(t5,RISTRETTO255_FACTOR); /* t5 = imi */
     gf_mul(t3,t5,t2);                /* iden * imi */
     gf_mul(t2,t5,t1);
     gf_mul(t5,t2,p->t);              /* "altx" = iden*imi*t */
@@ -278,14 +277,14 @@ ristretto_error_t ristretto255_point_decode (
     gf_add(tmp2,tmp2,tmp2);        /* 2*s*isr*den */
     gf_mul(tmp,tmp2,isr);          /* 2*s*isr^2*den */
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
-    gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
+    gf_mul(tmp,tmp2,RISTRETTO255_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
 
 #if COFACTOR==8
     /* Additionally check y != 0 and x*y*isomagic nonegative */
     succ &= ~gf_eq(p->y,ZERO);
     gf_mul(tmp,p->x,p->y);
-    gf_mul(tmp2,tmp,RISTRETTO_FACTOR);
+    gf_mul(tmp2,tmp,RISTRETTO255_FACTOR);
     succ &= ~gf_lobit(tmp2);
 #endif
 
@@ -1104,7 +1103,7 @@ void ristretto255_point_mul_by_ratio_and_encode_like_eddsa (
         gf_mul ( y, u, t ); // (x^2+y^2)(2z^2-y^2+x^2)
         gf_mul ( u, z, t );
         gf_copy( z, u );
-        gf_mul ( u, x, RISTRETTO_FACTOR );
+        gf_mul ( u, x, RISTRETTO255_FACTOR );
 #if IMAGINE_TWIST
         gf_mul_i( x, u );
 #else
@@ -1216,7 +1215,7 @@ ristretto_error_t ristretto255_point_decode_like_eddsa_and_mul_by_ratio (
         gf_add ( p->z, p->x, p->x );
         gf_sub ( c, p->z, p->t ); // 2z^2 - y^2 + x^2
         gf_div_i ( a, c );
-        gf_mul ( c, a, RISTRETTO_FACTOR );
+        gf_mul ( c, a, RISTRETTO255_FACTOR );
         gf_mul ( p->x, b, p->t); // (2xy)(y^2-x^2)
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
