@@ -20,7 +20,6 @@
 
 #define __RISTRETTO_25519_GF_DEFINED__ 1
 #define NLIMBS (40/sizeof(word_t))
-#define X_SER_BYTES 32
 #define SER_BYTES 32
 typedef struct gf_25519_s {
     word_t limb[NLIMBS];

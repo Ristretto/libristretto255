@@ -38,8 +38,6 @@ uint32_t __inline ctz(uint32_t value)
 #define scalar_t ristretto255_scalar_t
 #define point_t ristretto255_point_t
 #define precomputed_s ristretto255_precomputed_s
-#define IMAGINE_TWIST 1
-#define COFACTOR 8
 
 /* Comb config: number of combs, n, t, s. */
 #define COMBS_N 3
@@ -60,11 +58,7 @@ const gf RISTRETTO255_FACTOR = {FIELD_LITERAL(
     0x702557fa2bf03, 0x514b7d1a82cc6, 0x7f89efd8b43a7, 0x1aef49ec23700, 0x079376fa30500
 )};
 
-#if IMAGINE_TWIST
 #define TWISTED_D (-(EDWARDS_D))
-#else
-#define TWISTED_D ((EDWARDS_D)-1)
-#endif
 
 #if TWISTED_D < 0
 #define EFF_D (-(TWISTED_D))
@@ -132,34 +126,6 @@ void ristretto255_deisogenize (
     mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-#if COFACTOR == 4 && !IMAGINE_TWIST
-    (void)toggle_rotation; /* Only applies to cofactor 8 */
-    gf t1;
-    gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
-
-    gf_add(t1,p->x,p->t);
-    gf_sub(t2,p->x,p->t);
-    gf_mul(t3,t1,t2); /* t3 = num */
-    gf_sqr(t2,p->x);
-    gf_mul(t1,t2,t3);
-    gf_mulw(t2,t1,-1-TWISTED_D); /* -x^2 * (a-d) * num */
-    gf_isr(t1,t2);    /* t1 = isr */
-    gf_mul(t2,t1,t3); /* t2 = ratio */
-    gf_mul(t4,t2,RISTRETTO255_FACTOR);
-    mask_t negx = gf_lobit(t4) ^ toggle_altx;
-    gf_cond_neg(t2, negx);
-    gf_mul(t3,t2,p->z);
-    gf_sub(t3,t3,p->t);
-    gf_mul(t2,t3,p->x);
-    gf_mulw(t4,t2,-1-TWISTED_D);
-    gf_mul(s,t4,t1);
-    mask_t lobs = gf_lobit(s);
-    gf_cond_neg(s,lobs);
-    gf_copy(inv_el_m1,p->x);
-    gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
-    gf_add(inv_el_m1,inv_el_m1,p->t);
-
-#elif COFACTOR == 8 && IMAGINE_TWIST
     /* More complicated because of rotation */
     gf t1,t2,t3,t4,t5;
     gf_add(t1,p->z,p->y);
@@ -206,9 +172,6 @@ void ristretto255_deisogenize (
     gf_copy(inv_el_m1,p->z);
     gf_cond_neg(inv_el_m1,negz);
     gf_sub(inv_el_m1,inv_el_m1,t4);
-#else
-#error "Cofactor must be 4 (with no IMAGINE_TWIST) or 8 (with IMAGINE_TWIST)"
-#endif
 }
 
 void ristretto255_point_encode( unsigned char ser[SER_BYTES], const point_t p ) {
@@ -230,9 +193,7 @@ ristretto_error_t ristretto255_point_decode (
     succ &= ~gf_lobit(s);
 
     gf_sqr(s2,s);                  /* s^2 = -as^2 */
-#if IMAGINE_TWIST
     gf_sub(s2,ZERO,s2);            /* -as^2 */
-#endif
     gf_sub(den,ONE,s2);            /* 1+as^2 */
     gf_add(ynum,ONE,s2);           /* 1-as^2 */
     gf_mulw(num,s2,-4*TWISTED_D);
@@ -249,18 +210,14 @@ ristretto_error_t ristretto255_point_decode (
     gf_mul(tmp,tmp2,RISTRETTO255_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
 
-#if COFACTOR==8
     /* Additionally check y != 0 and x*y*isomagic nonegative */
     succ &= ~gf_eq(p->y,ZERO);
     gf_mul(tmp,p->x,p->y);
     gf_mul(tmp2,tmp,RISTRETTO255_FACTOR);
     succ &= ~gf_lobit(tmp2);
-#endif
 
-#if IMAGINE_TWIST
     gf_copy(tmp,p->x);
     gf_mul_i(p->x,tmp);
-#endif
 
     /* Fill in z and t */
     gf_copy(p->z,ONE);
@@ -757,21 +714,15 @@ ristretto_bool_t ristretto255_point_eq ( const point_t p, const point_t q ) {
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
 
-    #if (COFACTOR == 8)
-        gf_mul ( a, p->y, q->y );
-        gf_mul ( b, q->x, p->x );
-        #if !(IMAGINE_TWIST)
-            gf_sub ( a, ZERO, a );
-        #else
-           /* Interesting note: the 4tor would normally be rotation.
-            * But because of the *i twist, it's actually
-            * (x,y) <-> (iy,ix)
-            */
+    gf_mul ( a, p->y, q->y );
+    gf_mul ( b, q->x, p->x );
 
-           /* No code, just a comment. */
-        #endif
-        succ |= gf_eq(a,b);
-    #endif
+    /* Interesting note: the 4tor would normally be rotation.
+     * But because of the *i twist, it's actually
+     * (x,y) <-> (iy,ix)
+     */
+
+    succ |= gf_eq(a,b);
 
     return mask_to_bool(succ);
 }
@@ -799,19 +750,12 @@ void ristretto255_point_debugging_torque (
     point_t q,
     const point_t p
 ) {
-#if COFACTOR == 8 && IMAGINE_TWIST
     gf tmp;
     gf_mul(tmp,p->x,SQRT_MINUS_ONE);
     gf_mul(q->x,p->y,SQRT_MINUS_ONE);
     gf_copy(q->y,tmp);
     gf_copy(q->z,p->z);
     gf_sub(q->t,ZERO,p->t);
-#else
-    gf_sub(q->x,ZERO,p->x);
-    gf_sub(q->y,ZERO,p->y);
-    gf_copy(q->z,p->z);
-    gf_copy(q->t,p->t);
-#endif
 }
 
 void ristretto255_point_debugging_pscale (
@@ -820,7 +764,6 @@ void ristretto255_point_debugging_pscale (
     const uint8_t factor[SER_BYTES]
 ) {
     gf gfac,tmp;
-    /* NB this means you'll never pscale by negative numbers for p521 */
     ignore_result(gf_deserialize(gfac,factor,0,0));
     gf_cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
     gf_mul(tmp,p->x,gfac);
