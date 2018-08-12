@@ -1,7 +1,9 @@
-# libristretto255 [![Build Status][build-image]][build-link]
+# libristretto255 [![Build Status][build-image]][build-link] [![Appveyor Status][appveyor-image]][appveyor-link]
 
 [build-image]: https://travis-ci.org/Ristretto/libristretto255.svg?branch=master
 [build-link]: https://travis-ci.org/Ristretto/libristretto255
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/nn8d1gwg9agumo9l?svg=true
+[appveyor-link]: https://ci.appveyor.com/project/tarcieri/libristretto255
 
 <img width="200" height="200" src="https://ristretto.group/theme/ristretto-sm.png">
 
