@@ -1,5 +1,5 @@
 /**
- * @file curve25519/ristretto.c
+ * @file ristretto.c
  * @author Mike Hamburg
  *
  * @copyright
@@ -76,38 +76,9 @@ const gf RISTRETTO255_FACTOR = {FIELD_LITERAL(
 #define NEG_D 0
 #endif
 
-/** Number of bytes in a Ristretto255 public key. */
-#define RISTRETTO255_PUBLIC_BYTES 32
-
-/** Number of bytes in an Ristretto255 private key. */
-#define RISTRETTO255_PRIVATE_BYTES RISTRETTO255_PUBLIC_BYTES
-
-/** Number of bytes in an Ristretto255 private key. */
-#define RISTRETTO255_SIGNATURE_BYTES (RISTRETTO255_PUBLIC_BYTES + RISTRETTO255_PRIVATE_BYTES)
-
 /* End of template stuff */
 
-/* Sanity */
-#if (COFACTOR == 8) && !IMAGINE_TWIST && !UNSAFE_CURVE_HAS_POINTS_AT_INFINITY
-/* FUTURE MAGIC: Curve41417 doesn't have these properties. */
-#error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
-        /* OK, but why?
-         * Two reasons: #1: There are bugs when COFACTOR == && IMAGINE_TWIST
-         # #2:
-         */
-#endif
-
-#if IMAGINE_TWIST && (P_MOD_8 != 5)
-    #error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
-#endif
-
-#if (COFACTOR != 8) && (COFACTOR != 4)
-    #error "COFACTOR must be 4 or 8"
-#endif
-
-#if IMAGINE_TWIST
-    extern const gf SQRT_MINUS_ONE;
-#endif
+extern const gf SQRT_MINUS_ONE;
 
 #define WBITS RISTRETTO_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 

@@ -1,5 +1,5 @@
 /**
- * @file curve25519/scalar.c
+ * @file scalar.c
  * @author Mike Hamburg
  *
  * @copyright

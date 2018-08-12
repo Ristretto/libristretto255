@@ -10,8 +10,7 @@ BUILD_LIB  = build/lib
 BUILD_IBIN = build/obj/bin
 
 # TODO: fix builds for non-x86_64 architectures
-ARCHNAME = $(MACHINE)
-ARCHDIR  = arch_$(ARCHNAME)
+ARCH = $(MACHINE)
 
 ifeq ($(UNAME),Darwin)
 CC ?= clang
@@ -24,7 +23,7 @@ ASM ?= $(CC)
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS  = -Iinclude -Iinclude/$(ARCHDIR)
+INCFLAGS  = -Iinclude -Isrc -Isrc/arch/$(ARCH)
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 GENFLAGS  = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
 OFLAGS   ?= -O2
@@ -73,7 +72,7 @@ $(BUILD_OBJ)/timestamp:
 	mkdir -p $(BUILD_OBJ) $(BUILD_LIB) $(BUILD_IBIN)
 	touch $@
 
-$(BUILD_OBJ)/f_impl.o: src/$(ARCHDIR)/f_impl.c $(HEADERS)
+$(BUILD_OBJ)/f_impl.o: src/arch/$(ARCH)/f_impl.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD_IBIN)/ristretto_gen_tables: $(GENCOMPONENTS)

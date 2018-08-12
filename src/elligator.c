@@ -1,5 +1,5 @@
 /**
- * @file curve25519/elligator.c
+ * @file elligator.c
  * @author Mike Hamburg
  *
  * @copyright

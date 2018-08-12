@@ -1,5 +1,5 @@
 /**
- * @file p25519/f_field.h
+ * @file f_field.h
  * @author Mike Hamburg
  *
  * @copyright
@@ -51,13 +51,6 @@ typedef struct gf_25519_s {
 #define gf_serialize      gf_25519_serialize
 #define gf_deserialize    gf_25519_deserialize
 
-/* RFC 7748 support */
-#define X_PUBLIC_BYTES  X_SER_BYTES
-#define X_PRIVATE_BYTES X_PUBLIC_BYTES
-#define X_PRIVATE_BITS  255
-
-#define SQRT_MINUS_ONE    P25519_SQRT_MINUS_ONE /* might not be defined */
-
 #define INLINE_UNUSED __inline__ __attribute__((unused,always_inline))
 
 #ifdef __cplusplus
@@ -92,10 +85,7 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_hibit,uint
 
 #include "f_impl.h" /* Bring in the inline implementations */
 
-#define P_MOD_8 5
-#if P_MOD_8 == 5
-    extern const gf SQRT_MINUS_ONE;
-#endif
+extern const gf SQRT_MINUS_ONE;
 
 #ifndef LIMBPERM
   #define LIMBPERM(i) (i)
