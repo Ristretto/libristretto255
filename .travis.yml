@@ -1,8 +1,18 @@
-# The C implementation is generated using Python scripts
-language: python
+language: c
 
 script:
   - make
+
+compiler:
+  - clang
+  - gcc
+
+os:
+  - linux
+  - osx
+
+matrix:
+  fast_finish: true
 
 branches:
   only:
