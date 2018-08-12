@@ -30,8 +30,10 @@ Check back later for updates.
 
 ## License
 
-Copyright (c) 2014-2018 Cryptography Research, Inc (a division of Rambus).
+Copyright (c) 2014-2018 Ristretto Developers ([AUTHORS.md]),
+Cryptography Research, Inc (a division of Rambus).
 
 Distributed under the MIT License. See [LICENSE.txt] for more information.
 
+[AUTHORS.md]:  https://github.com/Ristretto/libristretto255/blob/master/AUTHORS.md
 [LICENSE.txt]: https://github.com/Ristretto/libristretto255/blob/master/LICENSE.txt

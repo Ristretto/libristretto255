@@ -2,7 +2,7 @@
  * @file field.h
  * @brief Generic gf header.
  * @copyright
- *   Copyright (c) 2014 Cryptography Research, Inc.  \n
+ *   Copyright (c) 2014-2018 Ristretto Developers, Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
  */
