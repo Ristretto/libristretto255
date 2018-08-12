@@ -1,46 +1,57 @@
-/** @brief Ristretto$(gf_bits) high-level functions. */
-
+/**
+ * @file curve25519/scalar.c
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief Ristretto255 high-level functions.
+ *
+ * @warning This file was automatically generated in Python.
+ * Please do not edit it.
+ */
 #include "word.h"
 #include "constant_time.h"
-#include <ristretto$(gf_bits)/common.h>
-#include <ristretto$(gf_bits)/point.h>
+#include <ristretto255/common.h>
+#include <ristretto255/point.h>
 
 /* Template stuff */
-#define SCALAR_BITS RISTRETTO$(gf_bits)_SCALAR_BITS
-#define SCALAR_SER_BYTES RISTRETTO$(gf_bits)_SCALAR_BYTES
-#define SCALAR_LIMBS RISTRETTO$(gf_bits)_SCALAR_LIMBS
-#define scalar_t ristretto$(gf_bits)_scalar_t
+#define SCALAR_BITS RISTRETTO255_SCALAR_BITS
+#define SCALAR_SER_BYTES RISTRETTO255_SCALAR_BYTES
+#define SCALAR_LIMBS RISTRETTO255_SCALAR_LIMBS
+#define scalar_t ristretto255_scalar_t
 
-static const ristretto$(gf_bits)_word_t MONTGOMERY_FACTOR = (ristretto$(gf_bits)_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
+static const ristretto_word_t MONTGOMERY_FACTOR = (ristretto_word_t)0xd2b51da312547e1bull;
 static const scalar_t sc_p = {{{
-    $(ser(q,64,"SC_LIMB"))
+    SC_LIMB(0x5812631a5cf5d3ed), SC_LIMB(0x14def9dea2f79cd6), SC_LIMB(0x0000000000000000), SC_LIMB(0x1000000000000000)
 }}}, sc_r2 = {{{
-    $(ser(((2**128)**((scalar_bits+63)//64))%q,64,"SC_LIMB"))
+    SC_LIMB(0xa40611e3449c0f01), SC_LIMB(0xd00e1ba768859347), SC_LIMB(0xceec73d217f5be65), SC_LIMB(0x0399411b7c309a3d)
 }}};
 /* End of template stuff */
 
 #define WBITS RISTRETTO_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
-const scalar_t ristretto$(gf_bits)_scalar_one = {{{1}}}, ristretto$(gf_bits)_scalar_zero = {{{0}}};
+const scalar_t ristretto255_scalar_one = {{{1}}}, ristretto255_scalar_zero = {{{0}}};
 
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
 static RISTRETTO_NOINLINE void sc_subx(
     scalar_t out,
-    const ristretto$(gf_bits)_word_t accum[SCALAR_LIMBS],
+    const ristretto_word_t accum[SCALAR_LIMBS],
     const scalar_t sub,
     const scalar_t p,
-    ristretto$(gf_bits)_word_t extra
+    ristretto_word_t extra
 ) {
-    ristretto$(gf_bits)_dsword_t chain = 0;
+    ristretto_dsword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
         out->limb[i] = chain;
         chain >>= WBITS;
     }
-    ristretto$(gf_bits)_word_t borrow = chain+extra; /* = 0 or -1 */
+    ristretto_word_t borrow = chain+extra; /* = 0 or -1 */
     
     chain = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
@@ -56,16 +67,16 @@ static RISTRETTO_NOINLINE void sc_montmul (
     const scalar_t b
 ) {
     unsigned int i,j;
-    ristretto$(gf_bits)_word_t accum[SCALAR_LIMBS+1] = {0};
-    ristretto$(gf_bits)_word_t hi_carry = 0;
+    ristretto_word_t accum[SCALAR_LIMBS+1] = {0};
+    ristretto_word_t hi_carry = 0;
     
     for (i=0; i<SCALAR_LIMBS; i++) {
-        ristretto$(gf_bits)_word_t mand = a->limb[i];
-        const ristretto$(gf_bits)_word_t *mier = b->limb;
+        ristretto_word_t mand = a->limb[i];
+        const ristretto_word_t *mier = b->limb;
         
-        ristretto$(gf_bits)_dword_t chain = 0;
+        ristretto_dword_t chain = 0;
         for (j=0; j<SCALAR_LIMBS; j++) {
-            chain += ((ristretto$(gf_bits)_dword_t)mand)*mier[j] + accum[j];
+            chain += ((ristretto_dword_t)mand)*mier[j] + accum[j];
             accum[j] = chain;
             chain >>= WBITS;
         }
@@ -75,7 +86,7 @@ static RISTRETTO_NOINLINE void sc_montmul (
         chain = 0;
         mier = sc_p->limb;
         for (j=0; j<SCALAR_LIMBS; j++) {
-            chain += (ristretto$(gf_bits)_dword_t)mand*mier[j] + accum[j];
+            chain += (ristretto_dword_t)mand*mier[j] + accum[j];
             if (j) accum[j-1] = chain;
             chain >>= WBITS;
         }
@@ -88,7 +99,7 @@ static RISTRETTO_NOINLINE void sc_montmul (
     sc_subx(out, accum, sc_p, sc_p, hi_carry);
 }
 
-void ristretto$(gf_bits)_scalar_mul (
+void ristretto255_scalar_mul (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -102,7 +113,7 @@ static RISTRETTO_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
     sc_montmul(out,a,a);
 }
 
-ristretto$(gf_bits)_error_t ristretto$(gf_bits)_scalar_invert (
+ristretto_error_t ristretto255_scalar_invert (
     scalar_t out,
     const scalar_t a
 ) {
@@ -128,7 +139,7 @@ ristretto$(gf_bits)_error_t ristretto$(gf_bits)_scalar_invert (
         
         if (started) sc_montsqr(out,out);
         
-        ristretto$(gf_bits)_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
+        ristretto_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
         if (i >= 0 && i<WBITS) {
             assert(w >= 2);
             w-=2;
@@ -145,7 +156,7 @@ ristretto$(gf_bits)_error_t ristretto$(gf_bits)_scalar_invert (
             if (started) {
                 sc_montmul(out,out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
             } else {
-                ristretto$(gf_bits)_scalar_copy(out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
+                ristretto255_scalar_copy(out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
                 started = 1;
             }
             trailing = 0;
@@ -157,12 +168,12 @@ ristretto$(gf_bits)_error_t ristretto$(gf_bits)_scalar_invert (
     assert(trailing==0);
     
     /* Demontgomerize */
-    sc_montmul(out,out,ristretto$(gf_bits)_scalar_one);
-    ristretto$(gf_bits)_bzero(precmp, sizeof(precmp));
-    return ristretto$(gf_bits)_succeed_if(~ristretto$(gf_bits)_scalar_eq(out,ristretto$(gf_bits)_scalar_zero));
+    sc_montmul(out,out,ristretto255_scalar_one);
+    ristretto_bzero(precmp, sizeof(precmp));
+    return ristretto_succeed_if(~ristretto255_scalar_eq(out,ristretto255_scalar_zero));
 }
 
-void ristretto$(gf_bits)_scalar_sub (
+void ristretto255_scalar_sub (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -170,12 +181,12 @@ void ristretto$(gf_bits)_scalar_sub (
     sc_subx(out, a->limb, b, sc_p, 0);
 }
 
-void ristretto$(gf_bits)_scalar_add (
+void ristretto255_scalar_add (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
 ) {
-    ristretto$(gf_bits)_dword_t chain = 0;
+    ristretto_dword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + a->limb[i]) + b->limb[i];
@@ -186,26 +197,26 @@ void ristretto$(gf_bits)_scalar_add (
 }
 
 void
-ristretto$(gf_bits)_scalar_set_unsigned (
+ristretto255_scalar_set_unsigned (
     scalar_t out,
     uint64_t w
 ) {
     memset(out,0,sizeof(scalar_t));
     unsigned int i = 0;
-    for (; i<sizeof(uint64_t)/sizeof(ristretto$(gf_bits)_word_t); i++) {
+    for (; i<sizeof(uint64_t)/sizeof(ristretto_word_t); i++) {
         out->limb[i] = w;
 #if RISTRETTO_WORD_BITS < 64
-        w >>= 8*sizeof(ristretto$(gf_bits)_word_t);
+        w >>= 8*sizeof(ristretto_word_t);
 #endif
     }
 }
 
-ristretto$(gf_bits)_bool_t
-ristretto$(gf_bits)_scalar_eq (
+ristretto_bool_t
+ristretto255_scalar_eq (
     const scalar_t a,
     const scalar_t b
 ) {
-    ristretto$(gf_bits)_word_t diff = 0;
+    ristretto_word_t diff = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         diff |= a->limb[i] ^ b->limb[i];
@@ -220,44 +231,44 @@ static RISTRETTO_INLINE void scalar_decode_short (
 ) {
     unsigned int i,j,k=0;
     for (i=0; i<SCALAR_LIMBS; i++) {
-        ristretto$(gf_bits)_word_t out = 0;
-        for (j=0; j<sizeof(ristretto$(gf_bits)_word_t) && k<nbytes; j++,k++) {
-            out |= ((ristretto$(gf_bits)_word_t)ser[k])<<(8*j);
+        ristretto_word_t out = 0;
+        for (j=0; j<sizeof(ristretto_word_t) && k<nbytes; j++,k++) {
+            out |= ((ristretto_word_t)ser[k])<<(8*j);
         }
         s->limb[i] = out;
     }
 }
 
-ristretto$(gf_bits)_error_t ristretto$(gf_bits)_scalar_decode(
+ristretto_error_t ristretto255_scalar_decode(
     scalar_t s,
     const unsigned char ser[SCALAR_SER_BYTES]
 ) {
     unsigned int i;
     scalar_decode_short(s, ser, SCALAR_SER_BYTES);
-    ristretto$(gf_bits)_dsword_t accum = 0;
+    ristretto_dsword_t accum = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
     /* Here accum == 0 or -1 */
     
-    ristretto$(gf_bits)_scalar_mul(s,s,ristretto$(gf_bits)_scalar_one); /* ham-handed reduce */
+    ristretto255_scalar_mul(s,s,ristretto255_scalar_one); /* ham-handed reduce */
     
-    return ristretto$(gf_bits)_succeed_if(~word_is_zero(accum));
+    return ristretto_succeed_if(~word_is_zero(accum));
 }
 
-void ristretto$(gf_bits)_scalar_destroy (
+void ristretto255_scalar_destroy (
     scalar_t scalar
 ) {
-    ristretto$(gf_bits)_bzero(scalar, sizeof(scalar_t));
+    ristretto_bzero(scalar, sizeof(scalar_t));
 }
 
-void ristretto$(gf_bits)_scalar_decode_long(
+void ristretto255_scalar_decode_long(
     scalar_t s,
     const unsigned char *ser,
     size_t ser_len
 ) {
     if (ser_len == 0) {
-        ristretto$(gf_bits)_scalar_copy(s, ristretto$(gf_bits)_scalar_zero);
+        ristretto255_scalar_copy(s, ristretto255_scalar_zero);
         return;
     }
     
@@ -272,50 +283,50 @@ void ristretto$(gf_bits)_scalar_decode_long(
     if (ser_len == sizeof(scalar_t)) {
         assert(i==0);
         /* ham-handed reduce */
-        ristretto$(gf_bits)_scalar_mul(s,t1,ristretto$(gf_bits)_scalar_one);
-        ristretto$(gf_bits)_scalar_destroy(t1);
+        ristretto255_scalar_mul(s,t1,ristretto255_scalar_one);
+        ristretto255_scalar_destroy(t1);
         return;
     }
 
     while (i) {
         i -= SCALAR_SER_BYTES;
         sc_montmul(t1,t1,sc_r2);
-        ignore_result( ristretto$(gf_bits)_scalar_decode(t2, ser+i) );
-        ristretto$(gf_bits)_scalar_add(t1, t1, t2);
+        ignore_result( ristretto255_scalar_decode(t2, ser+i) );
+        ristretto255_scalar_add(t1, t1, t2);
     }
 
-    ristretto$(gf_bits)_scalar_copy(s, t1);
-    ristretto$(gf_bits)_scalar_destroy(t1);
-    ristretto$(gf_bits)_scalar_destroy(t2);
+    ristretto255_scalar_copy(s, t1);
+    ristretto255_scalar_destroy(t1);
+    ristretto255_scalar_destroy(t2);
 }
 
-void ristretto$(gf_bits)_scalar_encode(
+void ristretto255_scalar_encode(
     unsigned char ser[SCALAR_SER_BYTES],
     const scalar_t s
 ) {
     unsigned int i,j,k=0;
     for (i=0; i<SCALAR_LIMBS; i++) {
-        for (j=0; j<sizeof(ristretto$(gf_bits)_word_t); j++,k++) {
+        for (j=0; j<sizeof(ristretto_word_t); j++,k++) {
             ser[k] = s->limb[i] >> (8*j);
         }
     }
 }
 
-void ristretto$(gf_bits)_scalar_cond_sel (
+void ristretto255_scalar_cond_sel (
     scalar_t out,
     const scalar_t a,
     const scalar_t b,
-    ristretto$(gf_bits)_bool_t pick_b
+    ristretto_bool_t pick_b
 ) {
     constant_time_select(out,a,b,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
 
-void ristretto$(gf_bits)_scalar_halve (
+void ristretto255_scalar_halve (
     scalar_t out,
     const scalar_t a
 ) {
-    ristretto$(gf_bits)_word_t mask = -(a->limb[0] & 1);
-    ristretto$(gf_bits)_dword_t chain = 0;
+    ristretto_word_t mask = -(a->limb[0] & 1);
+    ristretto_dword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + a->limb[i]) + (sc_p->limb[i] & mask);

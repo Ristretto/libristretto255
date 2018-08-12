@@ -1,14 +1,25 @@
-/** @brief Generic arithmetic which has to be compiled per field. */
-
+/**
+ * @file p25519/f_generic.c
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief Generic arithmetic which has to be compiled per field.
+ *
+ * @warning This file was automatically generated in Python.
+ * Please do not edit it.
+ */
 #include "field.h"
 
 static const gf MODULUS = {FIELD_LITERAL(
-    $(ser(modulus,gf_lit_limb_bits))
+    0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
 )};
     
 #if P_MOD_8 == 5
     const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
-        $(ser(msqrt(-1,modulus),gf_lit_limb_bits) if modulus % 4 == 1 else "/* NOPE */")
+        0x61b274a0ea0b0, 0x0d5a5fc8f189d, 0x7ef5e9cbd0c60, 0x78595a6804c9e, 0x2b8324804fc1d
     )};
 #endif
 

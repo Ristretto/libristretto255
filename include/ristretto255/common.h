@@ -71,55 +71,55 @@ extern "C" {
 #endif
 
 #if RISTRETTO_WORD_BITS == 64
-typedef uint64_t ristretto255_word_t;      /**< Word size for internal computations */
-typedef int64_t ristretto255_sword_t;      /**< Signed word size for internal computations */
-typedef uint64_t ristretto255_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
-typedef __uint128_t ristretto255_dword_t;  /**< Double-word size for internal computations */
-typedef __int128_t ristretto255_dsword_t;  /**< Signed double-word size for internal computations */
-#elif RISTRETTO_WORD_BITS == 32            /**< The number of bits in a word */
-typedef uint32_t ristretto255_word_t;      /**< Word size for internal computations */
-typedef int32_t ristretto255_sword_t;      /**< Signed word size for internal computations */
-typedef uint32_t ristretto255_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
-typedef uint64_t ristretto255_dword_t;     /**< Double-word size for internal computations */
-typedef int64_t ristretto255_dsword_t;     /**< Signed double-word size for internal computations */
+typedef uint64_t ristretto_word_t;      /**< Word size for internal computations */
+typedef int64_t ristretto_sword_t;      /**< Signed word size for internal computations */
+typedef uint64_t ristretto_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef __uint128_t ristretto_dword_t;  /**< Double-word size for internal computations */
+typedef __int128_t ristretto_dsword_t;  /**< Signed double-word size for internal computations */
+#elif RISTRETTO_WORD_BITS == 32         /**< The number of bits in a word */
+typedef uint32_t ristretto_word_t;      /**< Word size for internal computations */
+typedef int32_t ristretto_sword_t;      /**< Signed word size for internal computations */
+typedef uint32_t ristretto_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef uint64_t ristretto_dword_t;     /**< Double-word size for internal computations */
+typedef int64_t ristretto_dsword_t;     /**< Signed double-word size for internal computations */
 #else
 #error "Only supporting RISTRETTO_WORD_BITS = 32 or 64 for now"
 #endif
 
 /** RISTRETTO_TRUE = -1 so that RISTRETTO_TRUE & x = x */
-static const ristretto255_bool_t RISTRETTO_TRUE = -(ristretto255_bool_t)1;
+static const ristretto_bool_t RISTRETTO_TRUE = -(ristretto_bool_t)1;
 
 /** RISTRETTO_FALSE = 0 so that RISTRETTO_FALSE & x = 0 */
-static const ristretto255_bool_t RISTRETTO_FALSE = 0;
+static const ristretto_bool_t RISTRETTO_FALSE = 0;
 
 /** Another boolean type used to indicate success or failure. */
 typedef enum {
     RISTRETTO_SUCCESS = -1, /**< The operation succeeded. */
     RISTRETTO_FAILURE = 0   /**< The operation failed. */
-} ristretto255_error_t;
+} ristretto_error_t;
 
 
 /** Return success if x is true */
-static RISTRETTO_INLINE ristretto255_error_t
-ristretto255_succeed_if(ristretto255_bool_t x) {
-    return (ristretto255_error_t)x;
+static RISTRETTO_INLINE ristretto_error_t
+ristretto_succeed_if(ristretto_bool_t x) {
+    return (ristretto_error_t)x;
 }
 
 /** Return RISTRETTO_TRUE iff x == RISTRETTO_SUCCESS */
-static RISTRETTO_INLINE ristretto255_bool_t
-ristretto255_successful(ristretto255_error_t e) {
-    ristretto255_dword_t w = ((ristretto255_word_t)e) ^ ((ristretto255_word_t)RISTRETTO_SUCCESS);
+static RISTRETTO_INLINE ristretto_bool_t
+ristretto_successful(ristretto_error_t e) {
+    ristretto_dword_t w = ((ristretto_word_t)e) ^ ((ristretto_word_t)RISTRETTO_SUCCESS);
     return (w-1)>>RISTRETTO_WORD_BITS;
 }
 
 /** Overwrite data with zeros.  Uses memset_s if available. */
-void RISTRETTO_API_VIS ristretto255_bzero (
+void RISTRETTO_API_VIS ristretto_bzero (
     void *data,
     size_t size
 ) RISTRETTO_NONNULL;
 
 /** Compare two buffers, returning RISTRETTO_TRUE if they are equal. */
-ristretto255_bool_t RISTRETTO_API_VIS ristretto255_memeq (
+ristretto_bool_t RISTRETTO_API_VIS ristretto_memeq (
     const void *data1,
     const void *data2,
     size_t size
