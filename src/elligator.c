@@ -15,8 +15,6 @@
 
 /* Template stuff */
 #define point_t ristretto255_point_t
-#define IMAGINE_TWIST 1
-#define COFACTOR 8
 static const int EDWARDS_D = -121665;
 
 extern const gf RISTRETTO255_FACTOR;
@@ -74,10 +72,8 @@ void ristretto255_point_from_hash_nonuniform (
     gf_sub(b,b,ONE);
 
     /* isogenize */
-#if IMAGINE_TWIST
     gf_mul(c,a,SQRT_MINUS_ONE);
     gf_copy(a,c);
-#endif
 
     gf_sqr(c,a); /* s^2 */
     gf_add(a,a,a); /* 2s */
@@ -127,10 +123,7 @@ ristretto255_invert_elligator_nonuniform (
     ristretto255_deisogenize(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
 
     mask_t is_identity = gf_eq(p->t,ZERO);
-#if COFACTOR==4
-    gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
-    gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
-#elif IMAGINE_TWIST
+
     /* Terrible, terrible special casing due to lots of 0/0 is deisogenize
      * Basically we need to generate -D and +- i*RISTRETTO255_FACTOR
      */
@@ -141,15 +134,8 @@ ristretto255_invert_elligator_nonuniform (
     gf_cond_sel(c,c,ZERO,is_identity & ~sgn_ed_T);
     gf_mulw(a,ONE,-EDWARDS_D);
     gf_cond_sel(c,c,a,is_identity & ~sgn_ed_T &~ sgn_altx);
-#else
-#error "Different special-casing goes here!"
-#endif
 
-#if IMAGINE_TWIST
     gf_mulw(a,b,-EDWARDS_D);
-#else
-    gf_mulw(a,b,EDWARDS_D-1);
-#endif
     gf_add(b,a,b);
     gf_sub(a,a,c);
     gf_add(b,b,c);
@@ -160,30 +146,14 @@ ristretto255_invert_elligator_nonuniform (
     succ |= gf_eq(b,ZERO);
     gf_mul(b,c,a);
 
-#if 255 == 8*SER_BYTES + 1 /* p521. */
-#error "this won't work because it needs to adjust high bit, not low bit"
-    sgn_r0 = 0;
-#endif
-
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
     /* Eliminate duplicate values for identity ... */
     succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
-    // #if COFACTOR == 8
     //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
-    // #endif
 
-    #if 255 == 8*SER_BYTES + 1 /* p521 */
-        gf_serialize(recovered_hash,b,0);
-    #else
-        gf_serialize(recovered_hash,b,1);
-    #endif
-#if 7
-    #if COFACTOR==8
-        recovered_hash[SER_BYTES-1] ^= (hint>>4)<<7;
-    #else
-        recovered_hash[SER_BYTES-1] ^= (hint>>3)<<7;
-    #endif
-#endif
+    gf_serialize(recovered_hash,b,1);
+    recovered_hash[SER_BYTES-1] ^= (hint>>4)<<7;
+
     return ristretto_succeed_if(mask_to_bool(succ));
 }
 

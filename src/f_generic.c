@@ -27,7 +27,7 @@ void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
 
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
-    UNROLL for (unsigned int i=0; i<(with_hibit ? X_SER_BYTES : SER_BYTES); i++) {
+    UNROLL for (unsigned int i=0; i<SER_BYTES; i++) {
         if (fill < 8 && j < NLIMBS) {
             buffer |= ((dword_t)red->limb[LIMBPERM(j)]) << fill;
             fill += LIMB_PLACE_VALUE(LIMBPERM(j));
@@ -60,11 +60,10 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit, ui
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     dsword_t scarry = 0;
-    const unsigned nbytes = with_hibit ? X_SER_BYTES : SER_BYTES;
     UNROLL for (unsigned int i=0; i<NLIMBS; i++) {
-        UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < nbytes) {
+        UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < SER_BYTES) {
             uint8_t sj = serial[j];
-            if (j==nbytes-1) sj &= ~hi_nmask;
+            if (j==SER_BYTES-1) sj &= ~hi_nmask;
             buffer |= ((dword_t)sj) << fill;
             fill += 8;
             j++;
