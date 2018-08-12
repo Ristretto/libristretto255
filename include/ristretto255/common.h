@@ -3,7 +3,7 @@
  * @author Mike Hamburg
  *
  * @copyright
- *   Copyright (c) 2015 Cryptography Research, Inc.  \n
+ *   Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Common utility headers for the Ristretto255 library.

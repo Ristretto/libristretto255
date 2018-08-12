@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 Cryptography Research, Inc.
+/* Copyright (c) 2014-2018 Ristretto Developers, Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
@@ -63,7 +63,7 @@ extern int posix_memalign(void **, size_t, size_t);
 #else
     #error "libristretto255 only supports 32-bit and 64-bit architectures."
 #endif
-    
+
 /* Scalar limbs are keyed off of the API word size instead of the arch word size. */
 #if RISTRETTO_WORD_BITS == 64
     #define SC_LIMB(x) (x##ull)
@@ -130,7 +130,7 @@ extern int posix_memalign(void **, size_t, size_t);
     typedef uint32x4_t big_register_t;
     typedef uint64x2_t uint64xn_t;
     typedef uint32x4_t uint32xn_t;
-    
+
     static RISTRETTO_INLINE big_register_t
     br_set_to_mask(mask_t x) {
         return vdupq_n_u32(x);
@@ -230,9 +230,9 @@ typedef struct {
 static RISTRETTO_INLINE void *
 malloc_vector(size_t size) {
     void *out = NULL;
-    
+
     int ret = posix_memalign(&out, sizeof(big_register_t), size);
-    
+
     if (ret) {
         return NULL;
     } else {

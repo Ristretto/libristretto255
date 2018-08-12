@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2016 Cryptography Research, Inc.
+/* Copyright (c) 2014-2018 Ristretto Developers, Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
@@ -89,7 +89,7 @@ static __inline__ __uint128_t widemul2(const uint64_t *a, const uint64_t *b) {
 
 static __inline__ void mac(__uint128_t *acc, const uint64_t *a, const uint64_t *b) {
   uint64_t lo = *acc, hi = *acc>>64;
-  
+
   #ifdef __BMI2__
       uint64_t c,d;
       __asm__ volatile
@@ -110,14 +110,14 @@ static __inline__ void mac(__uint128_t *acc, const uint64_t *a, const uint64_t *
            : [b]"m"(*b), [a]"m"(*a)
            : "rax", "rdx", "cc");
   #endif
-  
+
   *acc = (((__uint128_t)(hi))<<64) | lo;
 }
 
 static __inline__ void macac(__uint128_t *acc, __uint128_t *acc2, const uint64_t *a, const uint64_t *b) {
   uint64_t lo = *acc, hi = *acc>>64;
   uint64_t lo2 = *acc2, hi2 = *acc2>>64;
-  
+
   #ifdef __BMI2__
       uint64_t c,d;
       __asm__ volatile
@@ -142,14 +142,14 @@ static __inline__ void macac(__uint128_t *acc, __uint128_t *acc2, const uint64_t
            : [b]"m"(*b), [a]"m"(*a)
            : "rax", "rdx", "cc");
   #endif
-  
+
   *acc = (((__uint128_t)(hi))<<64) | lo;
   *acc2 = (((__uint128_t)(hi2))<<64) | lo2;
 }
 
 static __inline__ void mac_rm(__uint128_t *acc, uint64_t a, const uint64_t *b) {
   uint64_t lo = *acc, hi = *acc>>64;
-  
+
   #ifdef __BMI2__
       uint64_t c,d;
       __asm__ volatile
@@ -169,13 +169,13 @@ static __inline__ void mac_rm(__uint128_t *acc, uint64_t a, const uint64_t *b) {
            : [b]"m"(*b), [a]"r"(a)
            : "rax", "rdx", "cc");
   #endif
-  
+
   *acc = (((__uint128_t)(hi))<<64) | lo;
 }
 
 static __inline__ void mac_rr(__uint128_t *acc, uint64_t a, const uint64_t b) {
   uint64_t lo = *acc, hi = *acc>>64;
-  
+
   #ifdef __BMI2__
       uint64_t c,d;
       __asm__ volatile
@@ -194,13 +194,13 @@ static __inline__ void mac_rr(__uint128_t *acc, uint64_t a, const uint64_t b) {
            : [b]"r"(b)
            : "rdx", "cc");
   #endif
-  
+
   *acc = (((__uint128_t)(hi))<<64) | lo;
 }
 
 static __inline__ void mac2(__uint128_t *acc, const uint64_t *a, const uint64_t *b) {
   uint64_t lo = *acc, hi = *acc>>64;
-  
+
   #ifdef __BMI2__
       uint64_t c,d;
       __asm__ volatile
@@ -223,7 +223,7 @@ static __inline__ void mac2(__uint128_t *acc, const uint64_t *a, const uint64_t 
            : [b]"m"(*b), [a]"m"(*a)
            : "rax", "rdx", "cc");
   #endif
-  
+
   *acc = (((__uint128_t)(hi))<<64) | lo;
 }
 
@@ -277,7 +277,7 @@ static __inline__ void msb2(__uint128_t *acc, const uint64_t *a, const uint64_t 
            : "rax", "rdx", "cc");
   #endif
   *acc = (((__uint128_t)(hi))<<64) | lo;
-  
+
 }
 
 static __inline__ void mrs(__uint128_t *acc, const uint64_t *a, const uint64_t *b) {

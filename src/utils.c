@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Cryptography Research, Inc.
+/* Copyright (c) 2015-2018 Ristretto Developers, Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 

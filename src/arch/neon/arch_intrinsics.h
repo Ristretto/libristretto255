@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 Cryptography Research, Inc.
+/* Copyright (c) 2016-2018 Ristretto Developers, Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
@@ -17,7 +17,7 @@ uint32_t word_is_zero(uint32_t a) {
 static __inline__ __attribute((always_inline,unused))
 uint64_t widemul(uint32_t a, uint32_t b) {
     /* Could be UMULL, but it's hard to express to CC that the registers must be different */
-    return ((uint64_t)a) * b; 
+    return ((uint64_t)a) * b;
 }
 
 #endif /* __ARCH_NEON_ARCH_INTRINSICS_H__ */
