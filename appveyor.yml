@@ -9,7 +9,12 @@ platform:
   - x64
 
 install:
+#  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+#  - rustup-init -yv --default-toolchain stable
+#  - set PATH=C:\msys64\usr\bin;%USERPROFILE%\.cargo\bin;%PATH%
   - set PATH=C:\msys64\usr\bin;%PATH%
 
 build_script:
   - make
+# TODO: run test suite on Windows
+#  - make test

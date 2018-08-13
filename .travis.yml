@@ -1,18 +1,27 @@
 language: c
 
+install:
+  - curl https://sh.rustup.rs -sSf | sh -s -- -y
+  - export PATH=$PATH:~/.cargo/bin
+
 script:
   - make
+  - make test
 
 compiler:
   - clang
   - gcc
 
-os:
-  - linux
-  - osx
-
 matrix:
   fast_finish: true
+  include:
+    # TODO: test (instead of just build) on OS X
+    - os: osx
+      compiler: clang
+      script: make
+    - os: osx
+      compiler: gcc
+      script: make
 
 branches:
   only:

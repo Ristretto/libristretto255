@@ -44,13 +44,14 @@ CFLAGS     = $(LANGFLAGS) $(WARNFLAGS) $(WARNFLAGS_C) $(INCFLAGS) $(OFLAGS) $(AR
 LDFLAGS    = $(XLDFLAGS)
 ASFLAGS    = $(ARCHFLAGS) $(XASFLAGS)
 
-.PHONY: clean all lib
+.PHONY: clean test all lib
 .PRECIOUS: src/%.c src/*/%.c include/%.h include/*/%.h $(BUILD_IBIN)/%
 
 HEADERS= Makefile $(BUILD_OBJ)/timestamp
 
 # components needed by all targets
-COMPONENTS = $(BUILD_OBJ)/f_impl.o \
+COMPONENTS = $(BUILD_OBJ)/bool.o \
+             $(BUILD_OBJ)/f_impl.o \
              $(BUILD_OBJ)/f_arithmetic.o \
              $(BUILD_OBJ)/f_generic.o \
              $(BUILD_OBJ)/ristretto.o \
@@ -103,6 +104,10 @@ $(BUILD_LIB)/libristretto255.a: $(LIBCOMPONENTS)
 
 $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Test suite: requires Rust is installed
+test: $(BUILD_LIB)/libristretto255.a
+	cd tests && LD_LIBRARY_PATH=build/lib cargo test --all --lib
 
 clean:
 	rm -fr build

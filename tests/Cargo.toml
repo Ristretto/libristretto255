@@ -1,0 +1,11 @@
+[package]
+name        = "libristretto255-tests"
+description = "Tests for libristretto255"
+version     = "0.0.0"
+
+[workspace]
+members = ["libristretto255-sys"]
+
+[dependencies]
+curve25519-dalek = "0.19"
+libristretto255-sys = { path = "libristretto255-sys" }

@@ -24,9 +24,24 @@ https://ristretto.group/
 ## Status
 
 This library is in an extremely early stage of development and is not ready to
-be used yet.
+be used yet. Check back later for updates.
 
-Check back later for updates.
+### Known Issues
+
+#### Test Suite
+
+* Test suite is failing due to SEGVs and is commented out
+  (likely related to Travis CI SEGV below)
+
+#### Travis CI
+
+* Sporadic SEGV on Travis C with clang when running `ristretto_gen_tables`, e.g.
+  https://travis-ci.org/Ristretto/libristretto255/jobs/415609501
+* OS X is build-only (test suite not being run)
+
+#### Appveyor
+
+* Windows is build-only (test suite not being run)
 
 ## License
 
