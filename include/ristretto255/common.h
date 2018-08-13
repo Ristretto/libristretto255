@@ -80,10 +80,10 @@ typedef int64_t ristretto_dsword_t;     /**< Signed double-word size for interna
 #endif
 
 /** RISTRETTO_TRUE = -1 so that RISTRETTO_TRUE & x = x */
-static const ristretto_bool_t RISTRETTO_TRUE = -(ristretto_bool_t)1;
+extern const ristretto_bool_t RISTRETTO_TRUE;
 
 /** RISTRETTO_FALSE = 0 so that RISTRETTO_FALSE & x = 0 */
-static const ristretto_bool_t RISTRETTO_FALSE = 0;
+extern const ristretto_bool_t RISTRETTO_FALSE;
 
 /** Another boolean type used to indicate success or failure. */
 typedef enum {

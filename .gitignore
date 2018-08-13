@@ -1,3 +1,4 @@
 *.swp
 /build
 /src/ristretto_tables.c
+/tests/target

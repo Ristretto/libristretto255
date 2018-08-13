@@ -108,7 +108,7 @@ void ristretto255_point_scalarmul (
 );
 
 /**
- * @brief TODO
+ * @brief TODO: document ristretto255_point_double_scalarmul
  */
 void ristretto255_point_double_scalarmul (
     ristretto255_point_t a,
@@ -119,7 +119,7 @@ void ristretto255_point_double_scalarmul (
 );
 
 /**
- * @brief TODO
+ * @brief TODO: document ristretto255_point_dual_scalarmul
  */
 void ristretto255_point_dual_scalarmul (
     ristretto255_point_t a1,
@@ -151,19 +151,18 @@ ristretto_bool_t ristretto255_point_valid (const ristretto255_point_t p);
  *
  * This version of the transform takes an input the same size as an encoded
  * Ristretto255 point (i.e. 32-bytes), but does not uphold the Elligator
- * property of producing encoded points which are indistinguishable from uniform
- * random strings. See the "ristretto255_point_from_hash_uniform" if your
- * usage requires that.
+ * property of producing points which are uniformly distributed over the group.
+ * See the "ristretto255_point_from_hash_uniform" if your usage requires that.
  *
  * Unlike Elligator 2 as specified for the "edwards25519" curve, the Ristretto
  * method for computing the Elligator map is constant time.
  *
  * @param [out] p Point computed using the Elligator 2 hash-to-curve method.
- * @param [in] hashed_data Digest output from which a point is computed.
+ * @param [in] data Bytes (i.e. digest output) from which a point is computed.
  */
 void ristretto255_point_from_hash_nonuniform (
     ristretto255_point_t p,
-    const unsigned char hashed_data[RISTRETTO255_SER_BYTES]
+    const unsigned char data[RISTRETTO255_SER_BYTES]
 );
 
 /**
@@ -171,14 +170,15 @@ void ristretto255_point_from_hash_nonuniform (
  * of a digest function such as SHA-512) using Elligator 2 on the Jacobi
  * quartic then translating this point to the Edwards curve using the isogeny.
  *
- * This version of the transform upholds the Elligator property of producing
- * encoded points which are indistinguishable from uniform random strings.
+ * If the input bytes are uniformly distributed, the resulting point will be
+ * uniformly distributed over the group, and its discrete log with respect to
+ * other points should be unknown.
  *
  * Unlike Elligator 2 as specified for the "edwards25519" curve, the Ristretto
  * method for computing the Elligator map is constant time.
  *
  * @param [out] p Point computed using the Elligator 2 hash-to-curve method.
- * @param [in] hashed_data Digest output from which a point is computed.
+ * @param [in] data Data to compute point from (i.e. digest or random bytes)
  */
 void ristretto255_point_from_hash_uniform (
     ristretto255_point_t pt,
