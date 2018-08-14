@@ -107,7 +107,7 @@ $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
 
 # Test suite: requires Rust is installed
 test: $(BUILD_LIB)/libristretto255.a
-	cd tests && LD_LIBRARY_PATH=build/lib cargo test --all --lib
+	cd tests && cargo test --all --lib
 
 clean:
 	rm -fr build tests/target

@@ -1,35 +1,41 @@
 language: c
 
-env:
-  - XCFLAGS="-g -fsanitize=address" XLDFLAGS=-fsanitize=address ASAN_OPTIONS=detect_leaks=0
-
 install:
   - curl https://sh.rustup.rs -sSf | sh -s -- -y
   - export PATH=$PATH:~/.cargo/bin
+
+env:
+  - XCFLAGS=-g
 
 script:
   - make
   - make test
 
 compiler:
-  - clang
   - gcc
+  - clang
+
+os:
+  - osx
+  - linux
 
 matrix:
   fast_finish: true
-  include:
-    # TODO: test (instead of just build) on OS X
-    # https://github.com/Ristretto/libristretto255/issues/19
-    - os: osx
+  exclude:
+    - os: linux
       compiler: clang
-      env: []
-      install: ""
-      script: make
-    - os: osx
-      compiler: gcc
-      env: []
-      install: ""
-      script: make
+  include:
+    - os: linux
+      compiler: clang
+      script:
+        # Enable ASAN as a workaround for ristretto_gen_tables SEGV
+        # See: https://github.com/Ristretto/libristretto255/issues/24
+        - XCFLAGS="-g -fsanitize=address" XLDFLAGS=-fsanitize=address ASAN_OPTIONS=detect_leaks=0 make
+        - make clean
+        - make build/obj/bin/ristretto_gen_tables && rm build/obj/ristretto_gen_tables.o
+        - clang -std=c99 -fno-strict-aliasing -g -Iinclude -Isrc -Isrc/arch/x86_64 -O2 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -fPIC -c -o build/obj/ristretto_tables.o src/ristretto_tables.c
+        - ar rcs build/lib/libristretto255.a build/obj/*.o
+        - cd tests && cargo test --all --lib
 
 branches:
   only:
