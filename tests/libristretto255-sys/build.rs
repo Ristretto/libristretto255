@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 fn main() {
     println!("cargo:rustc-link-search=../build/lib");
-    println!("cargo:rustc-link-lib=ristretto255");
+    println!("cargo:rustc-link-lib=static=ristretto255");
 
     let bindings = bindgen::Builder::default()
         .clang_arg("-I../../include")
