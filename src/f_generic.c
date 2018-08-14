@@ -8,6 +8,8 @@
  *
  * @brief Generic arithmetic which has to be compiled per field.
  */
+
+#include <ristretto255.h>
 #include "field.h"
 
 static const gf MODULUS = {FIELD_LITERAL(

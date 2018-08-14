@@ -2,6 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
+#include <ristretto255.h>
 #include "f_field.h"
 
 void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {

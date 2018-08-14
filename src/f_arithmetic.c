@@ -8,6 +8,7 @@
  * @brief Field-specific arithmetic.
  */
 
+#include <ristretto255.h>
 #include "field.h"
 #include "constant_time.h"
 

@@ -10,10 +10,10 @@
  */
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
-#include "word.h"
-#include "field.h"
 
 #include <ristretto255.h>
+#include "word.h"
+#include "field.h"
 
 #define SCALAR_BITS RISTRETTO255_SCALAR_BITS
 #define SCALAR_SER_BYTES RISTRETTO255_SCALAR_BYTES

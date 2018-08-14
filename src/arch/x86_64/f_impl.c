@@ -2,6 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
+#include <ristretto255.h>
 #include "f_field.h"
 
 /** Requires: input limbs < 9*2^51 */

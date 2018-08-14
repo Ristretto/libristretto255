@@ -9,9 +9,9 @@
  * @brief Elligator high-level functions.
  */
 
+#include <ristretto255.h>
 #include "word.h"
 #include "field.h"
-#include <ristretto255.h>
 
 #define point_t ristretto255_point_t
 static const int EDWARDS_D = -121665;

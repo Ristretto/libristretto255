@@ -14,7 +14,7 @@ extern int posix_memalign(void **, size_t, size_t);
 #endif
 
 // MSVC has no posix_memalign
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
 #endif
 
