@@ -22,7 +22,7 @@ extern int posix_memalign(void **, size_t, size_t);
 #include <stdint.h>
 #include "arch_intrinsics.h"
 
-#include <ristretto255/common.h>
+#include <ristretto255.h>
 
 #ifndef _BSD_SOURCE
 #define _BSD_SOURCE 1

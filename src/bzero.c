@@ -3,12 +3,12 @@
  */
 
 /**
- * @file utils.c
+ * @file bzero.c
  * @author Mike Hamburg
- * @brief Ristretto255 utility functions.
+ * @brief Zero a byte string
  */
 
-#include <ristretto255/common.h>
+#include <ristretto255.h>
 
 void ristretto_bzero (
     void *s,
@@ -26,18 +26,4 @@ void ristretto_bzero (
     for (; size; size--, destroy++)
         *destroy = 0;
 #endif
-}
-
-ristretto_bool_t ristretto_memeq (
-   const void *data1_,
-   const void *data2_,
-   size_t size
-) {
-    const unsigned char *data1 = (const unsigned char *)data1_;
-    const unsigned char *data2 = (const unsigned char *)data2_;
-    unsigned char ret = 0;
-    for (; size; size--, data1++, data2++) {
-        ret |= *data1 ^ *data2;
-    }
-    return (((ristretto_dword_t)ret) - 1) >> 8;
 }

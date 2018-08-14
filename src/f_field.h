@@ -18,13 +18,7 @@
 
 #include "word.h"
 
-#define __RISTRETTO_25519_GF_DEFINED__ 1
-#define NLIMBS (40/sizeof(word_t))
-#define SER_BYTES 32
-typedef struct gf_25519_s {
-    word_t limb[NLIMBS];
-} __attribute__((aligned(32))) gf_25519_s, gf_25519_t[1];
-
+#define SER_BYTES         32
 #define GF_LIT_LIMB_BITS  51
 #define GF_BITS           255
 #define ZERO              gf_25519_ZERO

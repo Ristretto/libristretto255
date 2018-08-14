@@ -9,7 +9,7 @@
  * @brief Boolean values used by this library
  */
 
-#include <ristretto255/common.h>
+#include <ristretto255.h>
 
 /* These constants exist to make the existing implementation immediately
  * FFI-able and therefore testable, however exposing these constants and
