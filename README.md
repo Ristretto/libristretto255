@@ -30,18 +30,21 @@ be used yet. Check back later for updates.
 
 #### Test Suite
 
-* Test suite is failing due to SEGVs and is commented out
-  (likely related to Travis CI SEGV below)
+* [#22]: Test suite is failing due to SEGVs and is commented out
 
 #### Travis CI
 
-* Sporadic SEGV on Travis C with clang when running `ristretto_gen_tables`, e.g.
-  https://travis-ci.org/Ristretto/libristretto255/jobs/415609501
-* OS X is build-only (test suite not being run)
+* [#24]: Sporadic SEGV on Travis C with clang when running `ristretto_gen_tables`
+* [#19]: OS X is build-only (test suite not being run)
 
 #### Appveyor
 
-* Windows is build-only (test suite not being run)
+* [#21]: Windows is build-only (test suite not being run)
+
+[#19]: https://github.com/Ristretto/libristretto255/issues/19
+[#21]: https://github.com/Ristretto/libristretto255/issues/21
+[#22]: https://github.com/Ristretto/libristretto255/issues/22
+[#24]: https://github.com/Ristretto/libristretto255/issues/24
 
 ## License
 
