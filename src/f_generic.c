@@ -28,7 +28,7 @@ void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     UNROLL for (unsigned int i=0; i<SER_BYTES; i++) {
-        if (fill < 8 && j < NLIMBS) {
+        if (fill < 8 && j < RISTRETTO255_FIELD_LIMBS) {
             buffer |= ((dword_t)red->limb[LIMBPERM(j)]) << fill;
             fill += LIMB_PLACE_VALUE(LIMBPERM(j));
             j++;
@@ -60,7 +60,7 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit, ui
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     dsword_t scarry = 0;
-    UNROLL for (unsigned int i=0; i<NLIMBS; i++) {
+    UNROLL for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
         UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < SER_BYTES) {
             uint8_t sj = serial[j];
             if (j==SER_BYTES-1) sj &= ~hi_nmask;
@@ -68,7 +68,7 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit, ui
             fill += 8;
             j++;
         }
-        x->limb[LIMBPERM(i)] = (i<NLIMBS-1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer;
+        x->limb[LIMBPERM(i)] = (i<RISTRETTO255_FIELD_LIMBS-1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer;
         fill -= LIMB_PLACE_VALUE(LIMBPERM(i));
         buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
         scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
@@ -86,7 +86,7 @@ void gf_strong_reduce (gf a) {
 
     /* compute total_value - p.  No need to reduce mod p. */
     dsword_t scarry = 0;
-    for (unsigned int i=0; i<NLIMBS; i++) {
+    for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
         scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)];
         a->limb[LIMBPERM(i)] = scarry & LIMB_MASK(LIMBPERM(i));
         scarry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
@@ -102,7 +102,7 @@ void gf_strong_reduce (gf a) {
     dword_t carry = 0;
 
     /* add it back */
-    for (unsigned int i=0; i<NLIMBS; i++) {
+    for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
         carry = carry + a->limb[LIMBPERM(i)] + (scarry_0 & MODULUS->limb[LIMBPERM(i)]);
         a->limb[LIMBPERM(i)] = carry & LIMB_MASK(LIMBPERM(i));
         carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
@@ -130,7 +130,7 @@ mask_t gf_eq(const gf a, const gf b) {
     gf_sub(c,a,b);
     gf_strong_reduce(c);
     mask_t ret=0;
-    for (unsigned int i=0; i<NLIMBS; i++) {
+    for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
         ret |= c->limb[LIMBPERM(i)];
     }
 

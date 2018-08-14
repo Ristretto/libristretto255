@@ -51,12 +51,12 @@ HEADERS= Makefile $(BUILD_OBJ)/timestamp
 
 # components needed by all targets
 COMPONENTS = $(BUILD_OBJ)/bool.o \
+             $(BUILD_OBJ)/bzero.o \
              $(BUILD_OBJ)/f_impl.o \
              $(BUILD_OBJ)/f_arithmetic.o \
              $(BUILD_OBJ)/f_generic.o \
              $(BUILD_OBJ)/ristretto.o \
-             $(BUILD_OBJ)/scalar.o \
-             $(BUILD_OBJ)/utils.o
+             $(BUILD_OBJ)/scalar.o
 
 # components needed by libristretto255.so
 LIBCOMPONENTS = $(COMPONENTS) $(BUILD_OBJ)/elligator.o $(BUILD_OBJ)/ristretto_tables.o
@@ -110,4 +110,4 @@ test: $(BUILD_LIB)/libristretto255.a
 	cd tests && LD_LIBRARY_PATH=build/lib cargo test --all --lib
 
 clean:
-	rm -fr build
+	rm -fr build tests/target

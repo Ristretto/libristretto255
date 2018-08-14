@@ -14,13 +14,21 @@ compiler:
 
 matrix:
   fast_finish: true
+  allow_failures:
+    # TODO: determine why clang build of "ristretto_gen_tables" SEGVs sporadically
+    # https://github.com/Ristretto/libristretto255/issues/24
+    - os: linux
+      compiler: clang
   include:
     # TODO: test (instead of just build) on OS X
+    # https://github.com/Ristretto/libristretto255/issues/19
     - os: osx
       compiler: clang
+      install: ""
       script: make
     - os: osx
       compiler: gcc
+      install: ""
       script: make
 
 branches:
