@@ -56,7 +56,6 @@ COMPONENTS = $(BUILD_OBJ)/bool.o \
              $(BUILD_OBJ)/bzero.o \
              $(BUILD_OBJ)/f_impl.o \
              $(BUILD_OBJ)/f_arithmetic.o \
-             $(BUILD_OBJ)/f_generic.o \
              $(BUILD_OBJ)/ristretto.o \
              $(BUILD_OBJ)/scalar.o
 
