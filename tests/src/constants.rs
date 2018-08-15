@@ -4,7 +4,7 @@ macro_rules! gf25519 {
     ($l0:expr, $l1:expr, $l2:expr, $l3:expr, $l4:expr) => {
         [gf_25519_s {
             limb: [$l0, $l1, $l2, $l3, $l4],
-            #[cfg(unix)]
+            #[cfg(target_pointer_width = "64")]
             __bindgen_padding_0: [0, 0, 0],
         }]
     };

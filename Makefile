@@ -10,14 +10,16 @@ BUILD_LIB  = build/lib
 BUILD_IBIN = build/obj/bin
 
 # TODO: fix builds for non-x86_64 architectures
-ARCH = $(MACHINE)
+ARCH ?= $(MACHINE)
 
 ifeq ($(UNAME),Darwin)
 CC ?= clang
 else
 CC ?= gcc
 endif
-LD = $(CC)
+
+LD   = $(CC)
+AR  ?= ar
 ASM ?= $(CC)
 
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
@@ -100,7 +102,7 @@ else
 endif
 
 $(BUILD_LIB)/libristretto255.a: $(LIBCOMPONENTS)
-	ar rcs $@ $(LIBCOMPONENTS)
+	$(AR) rcs $@ $(LIBCOMPONENTS)
 
 $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
