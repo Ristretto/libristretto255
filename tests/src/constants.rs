@@ -1,3 +1,5 @@
+#![allow(unknown_lints, unreadable_literal)]
+
 use libristretto255_sys::{gf_25519_t, ristretto255_point_t};
 
 macro_rules! field_literal {
