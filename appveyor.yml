@@ -3,13 +3,13 @@ environment:
   RUST_BACKTRACE: 1
   matrix:
   - TARGET: gnu
-  # TODO: test on MSVC
+  # TODO: test MSVC: https://github.com/Ristretto/libristretto255/issues/30
   # - TARGET: msvc
 
 image: Visual Studio 2017
 
 platform:
-  # TODO: test on 32-bit architectures
+  # TODO: 32-bit support: https://github.com/Ristretto/libristretto255/issues/29
   # - x86
   - x64
 
