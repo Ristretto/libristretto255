@@ -8,19 +8,19 @@
 
 #define LIMB_PLACE_VALUE(i) (((i)&1)?25:26)
 
-void gf_add_RAW (gf out, const gf a, const gf b) {
+void gf_add_RAW (gf_25519_t *out, const gf_25519_t *a, const gf_25519_t *b) {
     for (unsigned int i=0; i<10; i++) {
         out->limb[i] = a->limb[i] + b->limb[i];
     }
 }
 
-void gf_sub_RAW (gf out, const gf a, const gf b) {
+void gf_sub_RAW (gf_25519_t *out, const gf_25519_t *a, const gf_25519_t *b) {
     for (unsigned int i=0; i<10; i++) {
         out->limb[i] = a->limb[i] - b->limb[i];
     }
 }
 
-void gf_bias (gf a, int amt) {
+void gf_bias (gf_25519_t *a, int amt) {
     uint32_t coe = ((1ull<<26)-1)*amt, coo = ((1ull<<25)-1)*amt, co0 = coe-18*amt;
     for (unsigned int i=0; i<10; i+=2) {
         a->limb[i] += ((i==0) ? co0 : coe);
@@ -28,7 +28,7 @@ void gf_bias (gf a, int amt) {
     }
 }
 
-void gf_weak_reduce (gf a) {
+void gf_weak_reduce (gf_25519_t *a) {
     uint32_t maske = (1ull<<26) - 1, masko = (1ull<<25) - 1;
     uint32_t tmp = a->limb[9] >> 25;
     for (unsigned int i=8; i>0; i-=2) {

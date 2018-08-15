@@ -22,23 +22,23 @@ static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
 };
 
 /* To satisfy linker. */
-const gf ristretto255_precomputed_base_as_fe[1];
+const gf_25519_t ristretto255_precomputed_base_as_fe[1];
 const ristretto255_point_t ristretto255_point_base;
 
 struct niels_s;
-const gf_s *ristretto255_precomputed_wnaf_as_fe;
+const gf_25519_t *ristretto255_precomputed_wnaf_as_fe;
 extern const size_t ristretto255_sizeof_precomputed_wnafs;
 
 void ristretto255_precompute_wnafs (
     struct niels_s *out,
-    const ristretto255_point_t base
+    const ristretto255_point_t *base
 );
-static void field_print(const gf f) {
+static void field_print(const gf_25519_t *f) {
     unsigned char ser[SER_BYTES];
     gf_serialize(ser,f,1);
     int b=0, i, comma=0;
     unsigned long long limb = 0;
-    printf("{FIELD_LITERAL(");
+    printf("FIELD_LITERAL(");
     for (i=0; i<SER_BYTES; i++) {
         limb |= ((uint64_t)ser[i])<<b;
         b += 8;
@@ -51,7 +51,7 @@ static void field_print(const gf f) {
             limb = ((uint64_t)ser[i])>>(8-b);
         }
     }
-    printf(")}");
+    printf(")");
     assert(b<8);
 }
 
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     (void)argc; (void)argv;
 
     ristretto255_point_t real_point_base;
-    int ret = ristretto255_point_decode(real_point_base,base_point_ser_for_pregen,0);
+    int ret = ristretto255_point_decode(&real_point_base,base_point_ser_for_pregen,0);
     if (ret != RISTRETTO_SUCCESS) {
         fprintf(stderr, "Can't decode base point!\n");
         return 1;
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Can't allocate space for precomputed table\n");
         return 1;
     }
-    ristretto255_precompute(pre, real_point_base);
+    ristretto255_precompute(pre, &real_point_base);
 
     struct niels_s *pre_wnaf;
     ret = posix_memalign((void**)&pre_wnaf, ristretto255_alignof_precomputed_s, ristretto255_sizeof_precomputed_wnafs);
@@ -79,9 +79,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Can't allocate space for precomputed WNAF table\n");
         return 1;
     }
-    ristretto255_precompute_wnafs(pre_wnaf, real_point_base);
+    ristretto255_precompute_wnafs(pre_wnaf, &real_point_base);
 
-    const gf_s *output;
+    const gf_25519_t *output;
     unsigned i;
 
     printf("/** @warning: this file was automatically generated. */\n");
@@ -89,30 +89,30 @@ int main(int argc, char **argv) {
     printf("#include <ristretto255.h>\n\n");
     printf("#define ristretto255__id ristretto255_##_id\n");
 
-    output = (const gf_s *)real_point_base;
-    printf("const ristretto255_point_t ristretto255_point_base = {{\n");
-    for (i=0; i < sizeof(ristretto255_point_t); i+=sizeof(gf)) {
-        if (i) printf(",\n  ");
-        field_print(output++);
-    }
-    printf("\n}};\n");
-
-    output = (const gf_s *)pre;
-    printf("const gf ristretto255_precomputed_base_as_fe[%d]\n",
-        (int)(ristretto255_sizeof_precomputed_s / sizeof(gf)));
-    printf("VECTOR_ALIGNED = {\n  ");
-
-    for (i=0; i < ristretto255_sizeof_precomputed_s; i+=sizeof(gf)) {
+    output = (const gf_25519_t *)&real_point_base;
+    printf("const ristretto255_point_t ristretto255_point_base = {\n");
+    for (i=0; i < sizeof(ristretto255_point_t); i+=sizeof(gf_25519_t)) {
         if (i) printf(",\n  ");
         field_print(output++);
     }
     printf("\n};\n");
 
-    output = (const gf_s *)pre_wnaf;
-    printf("const gf ristretto255_precomputed_wnaf_as_fe[%d]\n",
-        (int)(ristretto255_sizeof_precomputed_wnafs / sizeof(gf)));
+    output = (const gf_25519_t *)pre;
+    printf("const gf_25519_t ristretto255_precomputed_base_as_fe[%d]\n",
+        (int)(ristretto255_sizeof_precomputed_s / sizeof(gf_25519_t)));
     printf("VECTOR_ALIGNED = {\n  ");
-    for (i=0; i < ristretto255_sizeof_precomputed_wnafs; i+=sizeof(gf)) {
+
+    for (i=0; i < ristretto255_sizeof_precomputed_s; i+=sizeof(gf_25519_t)) {
+        if (i) printf(",\n  ");
+        field_print(output++);
+    }
+    printf("\n};\n");
+
+    output = (const gf_25519_t *)pre_wnaf;
+    printf("const gf_25519_t ristretto255_precomputed_wnaf_as_fe[%d]\n",
+        (int)(ristretto255_sizeof_precomputed_wnafs / sizeof(gf_25519_t)));
+    printf("VECTOR_ALIGNED = {\n  ");
+    for (i=0; i < ristretto255_sizeof_precomputed_wnafs; i+=sizeof(gf_25519_t)) {
         if (i) printf(",\n  ");
         field_print(output++);
     }

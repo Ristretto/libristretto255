@@ -12,26 +12,26 @@
 #include <ristretto255.h>
 #include "field.h"
 
-static const gf MODULUS = {FIELD_LITERAL(
+static const gf_25519_t MODULUS = FIELD_LITERAL(
     0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
-)};
+);
 
-const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
+const gf_25519_t SQRT_MINUS_ONE = FIELD_LITERAL(
     0x61b274a0ea0b0, 0x0d5a5fc8f189d, 0x7ef5e9cbd0c60, 0x78595a6804c9e, 0x2b8324804fc1d
-)};
+);
 
 /** Serialize to wire format. */
-void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
-    gf red;
-    gf_copy(red, x);
-    gf_strong_reduce(red);
-    if (!with_hibit) { assert(gf_hibit(red) == 0); }
+void gf_serialize (uint8_t serial[SER_BYTES], const gf_25519_t *x, int with_hibit) {
+    gf_25519_t red;
+    gf_copy(&red, x);
+    gf_strong_reduce(&red);
+    if (!with_hibit) { assert(gf_hibit(&red) == 0); }
 
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     UNROLL for (unsigned int i=0; i<SER_BYTES; i++) {
         if (fill < 8 && j < RISTRETTO255_FIELD_LIMBS) {
-            buffer |= ((dword_t)red->limb[LIMBPERM(j)]) << fill;
+            buffer |= ((dword_t)red.limb[LIMBPERM(j)]) << fill;
             fill += LIMB_PLACE_VALUE(LIMBPERM(j));
             j++;
         }
@@ -42,23 +42,23 @@ void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
 }
 
 /** Return high bit of x = low bit of 2x mod p */
-mask_t gf_hibit(const gf x) {
-    gf y;
-    gf_add(y,x,x);
-    gf_strong_reduce(y);
-    return -(y->limb[0]&1);
+mask_t gf_hibit(const gf_25519_t *x) {
+    gf_25519_t y;
+    gf_add(&y,x,x);
+    gf_strong_reduce(&y);
+    return -(y.limb[0]&1);
 }
 
 /** Return high bit of x = low bit of 2x mod p */
-mask_t gf_lobit(const gf x) {
-    gf y;
-    gf_copy(y,x);
-    gf_strong_reduce(y);
-    return -(y->limb[0]&1);
+mask_t gf_lobit(const gf_25519_t *x) {
+    gf_25519_t y;
+    gf_copy(&y,x);
+    gf_strong_reduce(&y);
+    return -(y.limb[0]&1);
 }
 
 /** Deserialize from wire format; return -1 on success and 0 on failure. */
-mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit, uint8_t hi_nmask) {
+mask_t gf_deserialize (gf_25519_t *x, const uint8_t serial[SER_BYTES], int with_hibit, uint8_t hi_nmask) {
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     dsword_t scarry = 0;
@@ -73,14 +73,14 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit, ui
         x->limb[LIMBPERM(i)] = (i<RISTRETTO255_FIELD_LIMBS-1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer;
         fill -= LIMB_PLACE_VALUE(LIMBPERM(i));
         buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
-        scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
+        scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS.limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
     }
     mask_t succ = with_hibit ? -(mask_t)1 : ~gf_hibit(x);
     return succ & word_is_zero(buffer) & ~word_is_zero(scarry);
 }
 
 /** Reduce to canonical form. */
-void gf_strong_reduce (gf a) {
+void gf_strong_reduce (gf_25519_t *a) {
     /* first, clear high */
     gf_weak_reduce(a); /* Determined to have negligible perf impact. */
 
@@ -89,7 +89,7 @@ void gf_strong_reduce (gf a) {
     /* compute total_value - p.  No need to reduce mod p. */
     dsword_t scarry = 0;
     for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
-        scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)];
+        scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS.limb[LIMBPERM(i)];
         a->limb[LIMBPERM(i)] = scarry & LIMB_MASK(LIMBPERM(i));
         scarry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
@@ -105,7 +105,7 @@ void gf_strong_reduce (gf a) {
 
     /* add it back */
     for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
-        carry = carry + a->limb[LIMBPERM(i)] + (scarry_0 & MODULUS->limb[LIMBPERM(i)]);
+        carry = carry + a->limb[LIMBPERM(i)] + (scarry_0 & MODULUS.limb[LIMBPERM(i)]);
         a->limb[LIMBPERM(i)] = carry & LIMB_MASK(LIMBPERM(i));
         carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
@@ -114,26 +114,26 @@ void gf_strong_reduce (gf a) {
 }
 
 /** Subtract two gf elements d=a-b */
-void gf_sub (gf d, const gf a, const gf b) {
+void gf_sub (gf_25519_t *d, const gf_25519_t *a, const gf_25519_t *b) {
     gf_sub_RAW ( d, a, b );
     gf_bias( d, 2 );
     gf_weak_reduce ( d );
 }
 
 /** Add two field elements d = a+b */
-void gf_add (gf d, const gf a, const gf b) {
+void gf_add (gf_25519_t *d, const gf_25519_t *a, const gf_25519_t *b) {
     gf_add_RAW ( d, a, b );
     gf_weak_reduce ( d );
 }
 
 /** Compare a==b */
-mask_t gf_eq(const gf a, const gf b) {
-    gf c;
-    gf_sub(c,a,b);
-    gf_strong_reduce(c);
+mask_t gf_eq(const gf_25519_t *a, const gf_25519_t *b) {
+    gf_25519_t c;
+    gf_sub(&c,a,b);
+    gf_strong_reduce(&c);
     mask_t ret=0;
     for (unsigned int i=0; i<RISTRETTO255_FIELD_LIMBS; i++) {
-        ret |= c->limb[LIMBPERM(i)];
+        ret |= c.limb[LIMBPERM(i)];
     }
 
     return word_is_zero(ret);
