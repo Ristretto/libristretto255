@@ -8,5 +8,7 @@ members = ["libristretto255-sys"]
 
 [dependencies]
 curve25519-dalek = "0.19"
+hex = "*"
 libristretto255-sys = { path = "libristretto255-sys" }
 rand = "0.5"
+sha2 = "*"
