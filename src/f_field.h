@@ -18,31 +18,9 @@
 
 #include "word.h"
 
-#define SER_BYTES         32
+#define SER_BYTES         RISTRETTO255_SER_BYTES
 #define GF_LIT_LIMB_BITS  51
 #define GF_BITS           255
-#define ZERO              gf_25519_ZERO
-#define ONE               gf_25519_ONE
-#define MODULUS           gf_25519_MODULUS
-#define gf                gf_25519_t
-#define gf_s              gf_25519_s
-#define gf_eq             gf_25519_eq
-#define gf_hibit          gf_25519_hibit
-#define gf_lobit          gf_25519_lobit
-#define gf_copy           gf_25519_copy
-#define gf_add            gf_25519_add
-#define gf_sub            gf_25519_sub
-#define gf_add_RAW        gf_25519_add_RAW
-#define gf_sub_RAW        gf_25519_sub_RAW
-#define gf_bias           gf_25519_bias
-#define gf_weak_reduce    gf_25519_weak_reduce
-#define gf_strong_reduce  gf_25519_strong_reduce
-#define gf_mul            gf_25519_mul
-#define gf_sqr            gf_25519_sqr
-#define gf_mulw_unsigned  gf_25519_mulw_unsigned
-#define gf_isr            gf_25519_isr
-#define gf_serialize      gf_25519_serialize
-#define gf_deserialize    gf_25519_deserialize
 
 #define INLINE_UNUSED __inline__ __attribute__((unused,always_inline))
 
@@ -51,25 +29,25 @@ extern "C" {
 #endif
 
 /* Defined below in f_impl.h */
-static INLINE_UNUSED void gf_copy (gf out, const gf a) { *out = *a; }
-static INLINE_UNUSED void gf_add_RAW (gf out, const gf a, const gf b);
-static INLINE_UNUSED void gf_sub_RAW (gf out, const gf a, const gf b);
-static INLINE_UNUSED void gf_bias (gf inout, int amount);
-static INLINE_UNUSED void gf_weak_reduce (gf inout);
+static INLINE_UNUSED void gf_copy (gf_25519_t *out, const gf_25519_t *a) { *out = *a; }
+static INLINE_UNUSED void gf_add_RAW (gf_25519_t *out, const gf_25519_t *a, const gf_25519_t *b);
+static INLINE_UNUSED void gf_sub_RAW (gf_25519_t *out, const gf_25519_t *a, const gf_25519_t *b);
+static INLINE_UNUSED void gf_bias (gf_25519_t *inout, int amount);
+static INLINE_UNUSED void gf_weak_reduce (gf_25519_t *inout);
 
-void gf_strong_reduce (gf inout);
-void gf_add (gf out, const gf a, const gf b);
-void gf_sub (gf out, const gf a, const gf b);
-void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);
-void gf_mulw_unsigned (gf_s *__restrict__ out, const gf a, uint32_t b);
-void gf_sqr (gf_s *__restrict__ out, const gf a);
-mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
-mask_t gf_eq (const gf x, const gf y);
-mask_t gf_lobit (const gf x);
-mask_t gf_hibit (const gf x);
+void gf_strong_reduce (gf_25519_t *inout);
+void gf_add (gf_25519_t *out, const gf_25519_t *a, const gf_25519_t *b);
+void gf_sub (gf_25519_t *out, const gf_25519_t *a, const gf_25519_t *b);
+void gf_mul (gf_25519_t *__restrict__ out, const gf_25519_t *a, const gf_25519_t *b);
+void gf_mulw_unsigned (gf_25519_t *__restrict__ out, const gf_25519_t *a, uint32_t b);
+void gf_sqr (gf_25519_t *__restrict__ out, const gf_25519_t *a);
+mask_t gf_isr(gf_25519_t *a, const gf_25519_t *x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
+mask_t gf_eq (const gf_25519_t *x, const gf_25519_t *y);
+mask_t gf_lobit (const gf_25519_t *x);
+mask_t gf_hibit (const gf_25519_t *x);
 
-void gf_serialize (uint8_t *serial, const gf x,int with_highbit);
-mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_hibit,uint8_t hi_nmask);
+void gf_serialize (uint8_t *serial, const gf_25519_t *x,int with_highbit);
+mask_t gf_deserialize (gf_25519_t *x, const uint8_t serial[SER_BYTES], int with_hibit, uint8_t hi_nmask);
 
 
 #ifdef __cplusplus
@@ -78,13 +56,13 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_hibit,uint
 
 #include "f_impl.h" /* Bring in the inline implementations */
 
-extern const gf SQRT_MINUS_ONE;
+extern const gf_25519_t SQRT_MINUS_ONE;
 
 #ifndef LIMBPERM
   #define LIMBPERM(i) (i)
 #endif
 #define LIMB_MASK(i) (((1ull)<<LIMB_PLACE_VALUE(i))-1)
 
-static const gf ZERO = {{{0}}}, ONE = {{{ [LIMBPERM(0)] = 1 }}};
+static const gf_25519_t ZERO = {{0}}, ONE = {{ [LIMBPERM(0)] = 1 }};
 
 #endif /* __P25519_F_FIELD_H__ */

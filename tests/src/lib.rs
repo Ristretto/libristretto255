@@ -54,11 +54,11 @@ use std::ops::{Add, Mul, Neg, Sub};
 use libristretto255_sys::{
     ristretto255_point_add, ristretto255_point_base, ristretto255_point_decode,
     ristretto255_point_encode, ristretto255_point_eq, ristretto255_point_from_hash_uniform,
-    ristretto255_point_identity, ristretto255_point_negate, ristretto255_point_s,
-    ristretto255_point_scalarmul, ristretto255_point_sub, ristretto255_scalar_add,
-    ristretto255_scalar_eq, ristretto255_scalar_mul, ristretto255_scalar_s,
-    ristretto255_scalar_set_unsigned, ristretto255_scalar_sub, ristretto_bool_t, ristretto_error_t,
-    ristretto_error_t_RISTRETTO_FAILURE as RISTRETTO_FAILURE,
+    ristretto255_point_identity, ristretto255_point_negate, ristretto255_point_scalarmul,
+    ristretto255_point_sub, ristretto255_point_t, ristretto255_scalar_add,
+    ristretto255_scalar_encode, ristretto255_scalar_eq, ristretto255_scalar_mul,
+    ristretto255_scalar_set_unsigned, ristretto255_scalar_sub, ristretto255_scalar_t,
+    ristretto_bool_t, ristretto_error_t, ristretto_error_t_RISTRETTO_FAILURE as RISTRETTO_FAILURE,
     ristretto_error_t_RISTRETTO_SUCCESS as RISTRETTO_SUCCESS, RISTRETTO_FALSE, RISTRETTO_TRUE,
 };
 
@@ -92,14 +92,14 @@ fn convert_result<T>(value: T, error: ristretto_error_t) -> Result<T, Error> {
     }
 }
 
-/// Create an uninitialized (i.e. zero-initialized) `ristretto_scalar_s`
-fn uninitialized_scalar_s() -> ristretto255_scalar_s {
+/// Create an uninitialized (i.e. zero-initialized) `ristretto_scalar_t`
+fn uninitialized_scalar_t() -> ristretto255_scalar_t {
     unsafe { mem::zeroed() }
 }
 
-/// Scalars (i.e. wrapper around `ristretto255_scalar_s`)
+/// Scalars (i.e. wrapper around `ristretto255_scalar_t`)
 #[derive(Copy, Clone)]
-pub struct Scalar(ristretto255_scalar_s);
+pub struct Scalar(ristretto255_scalar_t);
 
 // ------------------------------------------------------------------------
 // Equality
@@ -107,8 +107,7 @@ pub struct Scalar(ristretto255_scalar_s);
 
 impl PartialEq for Scalar {
     fn eq(&self, other: &Scalar) -> bool {
-        // TODO: less hacky workaround around mutability problems
-        convert_bool(unsafe { ristretto255_scalar_eq(&mut self.clone().0, &mut other.clone().0) })
+        convert_bool(unsafe { ristretto255_scalar_eq(&self.0, &other.0) })
     }
 }
 
@@ -122,11 +121,10 @@ impl Add<Scalar> for Scalar {
     type Output = Scalar;
 
     fn add(self, other: Scalar) -> Scalar {
-        let mut result = uninitialized_scalar_s();
+        let mut result = uninitialized_scalar_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_scalar_add(&mut result, &mut self.clone().0, &mut other.clone().0);
+            ristretto255_scalar_add(&mut result, &self.0, &other.0);
         }
 
         Scalar(result)
@@ -137,11 +135,10 @@ impl Sub<Scalar> for Scalar {
     type Output = Scalar;
 
     fn sub(self, other: Scalar) -> Scalar {
-        let mut result = uninitialized_scalar_s();
+        let mut result = uninitialized_scalar_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_scalar_sub(&mut result, &mut self.clone().0, &mut other.clone().0);
+            ristretto255_scalar_sub(&mut result, &self.0, &other.0);
         }
 
         Scalar(result)
@@ -152,11 +149,10 @@ impl Mul<Scalar> for Scalar {
     type Output = Scalar;
 
     fn mul(self, other: Scalar) -> Scalar {
-        let mut result = uninitialized_scalar_s();
+        let mut result = uninitialized_scalar_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_scalar_mul(&mut result, &mut self.clone().0, &mut other.clone().0);
+            ristretto255_scalar_mul(&mut result, &self.0, &other.0);
         }
 
         Scalar(result)
@@ -169,7 +165,7 @@ impl Mul<Scalar> for Scalar {
 
 impl From<u64> for Scalar {
     fn from(x: u64) -> Scalar {
-        let mut scalar = uninitialized_scalar_s();
+        let mut scalar = uninitialized_scalar_t();
         unsafe {
             ristretto255_scalar_set_unsigned(&mut scalar, x);
         }
@@ -183,7 +179,11 @@ impl From<u64> for Scalar {
 
 impl Debug for Scalar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Scalar(TODO: ???)")
+        let mut bytes = [0u8; 32];
+        unsafe {
+            ristretto255_scalar_encode(bytes.as_mut_ptr(), &self.0);
+        }
+        write!(f, "Scalar({:?})", bytes)
     }
 }
 
@@ -210,7 +210,7 @@ impl CompressedRistretto {
     ///
     /// - `None` if `self` was not the canonical encoding of a point.
     pub fn decompress(&self) -> Option<RistrettoPoint> {
-        let mut point = uninitialized_point_s();
+        let mut point = uninitialized_point_t();
 
         let error = unsafe {
             ristretto255_point_decode(
@@ -220,7 +220,6 @@ impl CompressedRistretto {
             )
         };
 
-        // TODO: check `ristretto255_point_valid`?
         convert_result(point.into(), error).ok()
     }
 }
@@ -237,8 +236,8 @@ impl Default for CompressedRistretto {
     }
 }
 
-/// Create an uninitialized (i.e. zero-initialized) `ristretto_point_s`
-fn uninitialized_point_s() -> ristretto255_point_s {
+/// Create an uninitialized (i.e. zero-initialized) `ristretto255_point_t`
+fn uninitialized_point_t() -> ristretto255_point_t {
     unsafe { mem::zeroed() }
 }
 
@@ -246,7 +245,7 @@ fn uninitialized_point_s() -> ristretto255_point_s {
 /// Curve25519 (a.k.a. Ristretto255)
 #[derive(Copy, Clone)]
 #[repr(transparent)]
-pub struct RistrettoPoint(ristretto255_point_s);
+pub struct RistrettoPoint(ristretto255_point_t);
 
 impl RistrettoPoint {
     /// Compress this point using the Ristretto encoding.
@@ -262,7 +261,7 @@ impl RistrettoPoint {
 
     /// Construct a `RistrettoPoint` from 64 bytes of data.
     pub fn from_uniform_bytes(bytes: &[u8; 64]) -> RistrettoPoint {
-        let mut point = uninitialized_point_s();
+        let mut point = uninitialized_point_t();
 
         unsafe {
             ristretto255_point_from_hash_uniform(&mut point, bytes.as_ptr());
@@ -272,6 +271,7 @@ impl RistrettoPoint {
     }
 
     /// Return the coset self + E[4], for debugging.
+    /// TODO: double check the `EIGHT_TORSION` table is correct
     fn coset4(self) -> [Self; 4] {
         [
             self,
@@ -284,11 +284,11 @@ impl RistrettoPoint {
 
 impl RistrettoPoint {
     pub fn basepoint() -> RistrettoPoint {
-        RistrettoPoint(unsafe { ristretto255_point_base[0].clone() })
+        RistrettoPoint(unsafe { ristretto255_point_base.clone() })
     }
 
     pub fn identity() -> RistrettoPoint {
-        RistrettoPoint(unsafe { ristretto255_point_identity[0].clone() })
+        RistrettoPoint(unsafe { ristretto255_point_identity.clone() })
     }
 }
 
@@ -298,8 +298,8 @@ impl Default for RistrettoPoint {
     }
 }
 
-impl From<ristretto255_point_s> for RistrettoPoint {
-    fn from(point: ristretto255_point_s) -> RistrettoPoint {
+impl From<ristretto255_point_t> for RistrettoPoint {
+    fn from(point: ristretto255_point_t) -> RistrettoPoint {
         RistrettoPoint(point)
     }
 }
@@ -310,8 +310,7 @@ impl From<ristretto255_point_s> for RistrettoPoint {
 
 impl PartialEq for RistrettoPoint {
     fn eq(&self, other: &RistrettoPoint) -> bool {
-        // TODO: less hacky workaround around mutability problems
-        convert_bool(unsafe { ristretto255_point_eq(&mut self.clone().0, &mut other.clone().0) })
+        convert_bool(unsafe { ristretto255_point_eq(&self.0, &other.0) })
     }
 }
 
@@ -325,11 +324,10 @@ impl Add<RistrettoPoint> for RistrettoPoint {
     type Output = RistrettoPoint;
 
     fn add(self, other: RistrettoPoint) -> RistrettoPoint {
-        let mut result = uninitialized_point_s();
+        let mut result = uninitialized_point_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_point_add(&mut result, &mut self.clone().0, &mut other.clone().0);
+            ristretto255_point_add(&mut result, &self.0, &other.0);
         }
 
         RistrettoPoint(result)
@@ -340,11 +338,10 @@ impl Sub<RistrettoPoint> for RistrettoPoint {
     type Output = RistrettoPoint;
 
     fn sub(self, other: RistrettoPoint) -> RistrettoPoint {
-        let mut result = uninitialized_point_s();
+        let mut result = uninitialized_point_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_point_sub(&mut result, &mut self.clone().0, &mut other.clone().0);
+            ristretto255_point_sub(&mut result, &self.0, &other.0);
         }
 
         RistrettoPoint(result)
@@ -355,11 +352,10 @@ impl Neg for RistrettoPoint {
     type Output = RistrettoPoint;
 
     fn neg(self) -> RistrettoPoint {
-        let mut result = uninitialized_point_s();
+        let mut result = uninitialized_point_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_point_negate(&mut result, &mut self.clone().0);
+            ristretto255_point_negate(&mut result, &self.0);
         }
 
         RistrettoPoint(result)
@@ -371,11 +367,10 @@ impl Mul<Scalar> for RistrettoPoint {
 
     /// Scalar multiplication: compute `scalar * self`.
     fn mul(self, scalar: Scalar) -> RistrettoPoint {
-        let mut result = uninitialized_point_s();
+        let mut result = uninitialized_point_t();
 
-        // TODO: less hacky workaround around mutability problems
         unsafe {
-            ristretto255_point_scalarmul(&mut result, &mut self.clone().0, &mut scalar.clone().0);
+            ristretto255_point_scalarmul(&mut result, &self.0, &scalar.0);
         }
 
         RistrettoPoint(result)
@@ -397,7 +392,7 @@ impl Mul<RistrettoPoint> for Scalar {
 
 impl From<curve25519_dalek::ristretto::RistrettoPoint> for RistrettoPoint {
     fn from(dalek_ristretto_point: curve25519_dalek::ristretto::RistrettoPoint) -> Self {
-        panic!("dalek point is: {:?}", dalek_ristretto_point);
+        panic!("unimplemented: dalek point is: {:?}", dalek_ristretto_point);
     }
 }
 

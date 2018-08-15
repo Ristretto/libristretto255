@@ -120,9 +120,9 @@ void ristretto_bzero (
 /** @brief Galois field element internal structure */
 #define RISTRETTO255_FIELD_LIMBS (40/sizeof(ristretto_word_t))
 
-typedef struct gf_25519_s {
+typedef struct {
     ristretto_word_t limb[RISTRETTO255_FIELD_LIMBS];
-} __attribute__((aligned(32))) gf_25519_s, gf_25519_t[1];
+} __attribute__((aligned(32))) gf_25519_t;
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
@@ -143,11 +143,11 @@ typedef struct gf_25519_s {
 #define RISTRETTO255_REMOVED_COFACTOR 8
 
 /** Representation of a point on the elliptic curve. */
-typedef struct ristretto255_point_s {
+typedef struct {
     /** @cond internal */
     gf_25519_t x,y,z,t; /* Twisted extended homogeneous coordinates */
     /** @endcond */
-} ristretto255_point_t[1];
+} ristretto255_point_t;
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct ristretto255_precomputed_s;
@@ -159,11 +159,11 @@ typedef struct ristretto255_precomputed_s ristretto255_precomputed_s;
 extern const size_t ristretto255_sizeof_precomputed_s, ristretto255_alignof_precomputed_s;
 
 /** Representation of an element of the scalar field. */
-typedef struct ristretto255_scalar_s {
+typedef struct {
     /** @cond internal */
     ristretto_word_t limb[RISTRETTO255_SCALAR_LIMBS];
     /** @endcond */
-} ristretto255_scalar_t[1];
+} ristretto255_scalar_t;
 
 #if defined _MSC_VER
 
@@ -198,7 +198,7 @@ extern const ristretto255_point_t ristretto255_point_identity;
 extern const ristretto255_point_t ristretto255_point_base;
 
 /** Precomputed table of multiples of the base point on the curve. */
-extern const struct ristretto255_precomputed_s *ristretto255_precomputed_base;
+extern const ristretto255_precomputed_s *ristretto255_precomputed_base;
 
 #endif // _MSC_VER
 /**
@@ -212,7 +212,7 @@ extern const struct ristretto255_precomputed_s *ristretto255_precomputed_base;
  * and has been reduced modulo that modulus.
  */
 ristretto_error_t ristretto255_scalar_decode (
-    ristretto255_scalar_t out,
+    ristretto255_scalar_t *out,
     const unsigned char ser[RISTRETTO255_SCALAR_BYTES]
 ) RISTRETTO_WARN_UNUSED RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
@@ -225,7 +225,7 @@ ristretto_error_t ristretto255_scalar_decode (
  * @param [out] out Deserialized form.
  */
 void ristretto255_scalar_decode_long (
-    ristretto255_scalar_t out,
+    ristretto255_scalar_t *out,
     const unsigned char *ser,
     size_t ser_len
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
@@ -238,7 +238,7 @@ void ristretto255_scalar_decode_long (
  */
 void ristretto255_scalar_encode (
     unsigned char ser[RISTRETTO255_SCALAR_BYTES],
-    const ristretto255_scalar_t s
+    const ristretto255_scalar_t *s
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE RISTRETTO_NOINLINE;
 
 /**
@@ -248,9 +248,9 @@ void ristretto255_scalar_encode (
  * @param [out] out a+b.
  */
 void ristretto255_scalar_add (
-    ristretto255_scalar_t out,
-    const ristretto255_scalar_t a,
-    const ristretto255_scalar_t b
+    ristretto255_scalar_t *out,
+    const ristretto255_scalar_t *a,
+    const ristretto255_scalar_t *b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -261,8 +261,8 @@ void ristretto255_scalar_add (
  * @retval RISTRETTO_FALSE The scalars are not equal.
  */
 ristretto_bool_t ristretto255_scalar_eq (
-    const ristretto255_scalar_t a,
-    const ristretto255_scalar_t b
+    const ristretto255_scalar_t *a,
+    const ristretto255_scalar_t *b
 ) RISTRETTO_WARN_UNUSED RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -272,9 +272,9 @@ ristretto_bool_t ristretto255_scalar_eq (
  * @param [out] out a-b.
  */
 void ristretto255_scalar_sub (
-    ristretto255_scalar_t out,
-    const ristretto255_scalar_t a,
-    const ristretto255_scalar_t b
+    ristretto255_scalar_t *out,
+    const ristretto255_scalar_t *a,
+    const ristretto255_scalar_t *b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -284,9 +284,9 @@ void ristretto255_scalar_sub (
  * @param [out] out a*b.
  */
 void ristretto255_scalar_mul (
-    ristretto255_scalar_t out,
-    const ristretto255_scalar_t a,
-    const ristretto255_scalar_t b
+    ristretto255_scalar_t *out,
+    const ristretto255_scalar_t *a,
+    const ristretto255_scalar_t *b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -295,8 +295,8 @@ void ristretto255_scalar_mul (
 * @param [out] out a/2.
 */
 void ristretto255_scalar_halve (
-   ristretto255_scalar_t out,
-   const ristretto255_scalar_t a
+   ristretto255_scalar_t *out,
+   const ristretto255_scalar_t *a
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -306,8 +306,8 @@ void ristretto255_scalar_halve (
  * @return RISTRETTO_SUCCESS The input is nonzero.
  */
 ristretto_error_t ristretto255_scalar_invert (
-    ristretto255_scalar_t out,
-    const ristretto255_scalar_t a
+    ristretto255_scalar_t *out,
+    const ristretto255_scalar_t *a
 ) RISTRETTO_WARN_UNUSED RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -317,8 +317,8 @@ ristretto_error_t ristretto255_scalar_invert (
  * @param [out] out Will become a copy of a.
  */
 static inline void RISTRETTO_NONNULL ristretto255_scalar_copy (
-    ristretto255_scalar_t out,
-    const ristretto255_scalar_t a
+    ristretto255_scalar_t *out,
+    const ristretto255_scalar_t *a
 ) {
     *out = *a;
 }
@@ -329,7 +329,7 @@ static inline void RISTRETTO_NONNULL ristretto255_scalar_copy (
  * @param [out] out Will become equal to a.
  */
 void ristretto255_scalar_set_unsigned (
-    ristretto255_scalar_t out,
+    ristretto255_scalar_t *out,
     uint64_t a
 ) RISTRETTO_NONNULL;
 
@@ -341,7 +341,7 @@ void ristretto255_scalar_set_unsigned (
  */
 void ristretto255_point_encode (
     uint8_t ser[RISTRETTO255_SER_BYTES],
-    const ristretto255_point_t pt
+    const ristretto255_point_t *pt
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -359,7 +359,7 @@ void ristretto255_point_encode (
  * ser does not represent a point.
  */
 ristretto_error_t ristretto255_point_decode (
-    ristretto255_point_t pt,
+    ristretto255_point_t *pt,
     const uint8_t ser[RISTRETTO255_SER_BYTES],
     ristretto_bool_t allow_identity
 ) RISTRETTO_WARN_UNUSED RISTRETTO_NONNULL RISTRETTO_NOINLINE;
@@ -372,8 +372,8 @@ ristretto_error_t ristretto255_point_decode (
  * @param [in] b Any point.
  */
 static inline void RISTRETTO_NONNULL ristretto255_point_copy (
-    ristretto255_point_t a,
-    const ristretto255_point_t b
+    ristretto255_point_t *a,
+    const ristretto255_point_t *b
 ) {
     *a=*b;
 }
@@ -388,8 +388,8 @@ static inline void RISTRETTO_NONNULL ristretto255_point_copy (
  * @retval RISTRETTO_FALSE The points are not equal.
  */
 ristretto_bool_t ristretto255_point_eq (
-    const ristretto255_point_t a,
-    const ristretto255_point_t b
+    const ristretto255_point_t *a,
+    const ristretto255_point_t *b
 ) RISTRETTO_WARN_UNUSED RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -402,9 +402,9 @@ ristretto_bool_t ristretto255_point_eq (
  * @param [in] b An addend.
  */
 void ristretto255_point_add (
-    ristretto255_point_t sum,
-    const ristretto255_point_t a,
-    const ristretto255_point_t b
+    ristretto255_point_t *sum,
+    const ristretto255_point_t *a,
+    const ristretto255_point_t *b
 ) RISTRETTO_NONNULL;
 
 /**
@@ -415,8 +415,8 @@ void ristretto255_point_add (
  * @param [in] a A point.
  */
 void ristretto255_point_double (
-    ristretto255_point_t two_a,
-    const ristretto255_point_t a
+    ristretto255_point_t *two_a,
+    const ristretto255_point_t *a
 ) RISTRETTO_NONNULL;
 
 /**
@@ -429,9 +429,9 @@ void ristretto255_point_double (
  * @param [in] b The subtrahend.
  */
 void ristretto255_point_sub (
-    ristretto255_point_t diff,
-    const ristretto255_point_t a,
-    const ristretto255_point_t b
+    ristretto255_point_t *diff,
+    const ristretto255_point_t *a,
+    const ristretto255_point_t *b
 ) RISTRETTO_NONNULL;
 
 /**
@@ -442,8 +442,8 @@ void ristretto255_point_sub (
  * @param [in] a The input point.
  */
 void ristretto255_point_negate (
-   ristretto255_point_t nega,
-   const ristretto255_point_t a
+   ristretto255_point_t *nega,
+   const ristretto255_point_t *a
 ) RISTRETTO_NONNULL;
 
 /**
@@ -454,9 +454,9 @@ void ristretto255_point_negate (
  * @param [in] scalar The scalar to multiply by.
  */
 void ristretto255_point_scalarmul (
-    ristretto255_point_t scaled,
-    const ristretto255_point_t base,
-    const ristretto255_scalar_t scalar
+    ristretto255_point_t *scaled,
+    const ristretto255_point_t *base,
+    const ristretto255_scalar_t *scalar
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -479,7 +479,7 @@ void ristretto255_point_scalarmul (
 ristretto_error_t ristretto255_direct_scalarmul (
     uint8_t scaled[RISTRETTO255_SER_BYTES],
     const uint8_t base[RISTRETTO255_SER_BYTES],
-    const ristretto255_scalar_t scalar,
+    const ristretto255_scalar_t *scalar,
     ristretto_bool_t allow_identity,
     ristretto_bool_t short_circuit
 ) RISTRETTO_NONNULL RISTRETTO_WARN_UNUSED RISTRETTO_NOINLINE;
@@ -495,7 +495,7 @@ ristretto_error_t ristretto255_direct_scalarmul (
  */
 void ristretto255_precompute (
     ristretto255_precomputed_s *a,
-    const ristretto255_point_t b
+    const ristretto255_point_t *b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -510,9 +510,9 @@ void ristretto255_precompute (
  * @param [in] scalar The scalar to multiply by.
  */
 void ristretto255_precomputed_scalarmul (
-    ristretto255_point_t scaled,
+    ristretto255_point_t *scaled,
     const ristretto255_precomputed_s *base,
-    const ristretto255_scalar_t scalar
+    const ristretto255_scalar_t *scalar
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -529,11 +529,11 @@ void ristretto255_precomputed_scalarmul (
  * @param [in] scalar2 A second scalar to multiply by.
  */
 void ristretto255_point_double_scalarmul (
-    ristretto255_point_t combo,
-    const ristretto255_point_t base1,
-    const ristretto255_scalar_t scalar1,
-    const ristretto255_point_t base2,
-    const ristretto255_scalar_t scalar2
+    ristretto255_point_t *combo,
+    const ristretto255_point_t *base1,
+    const ristretto255_scalar_t *scalar1,
+    const ristretto255_point_t *base2,
+    const ristretto255_scalar_t *scalar2
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -552,11 +552,11 @@ void ristretto255_point_double_scalarmul (
  * @param [in] scalar2 A second scalar to multiply by.
  */
 void ristretto255_point_dual_scalarmul (
-    ristretto255_point_t a1,
-    ristretto255_point_t a2,
-    const ristretto255_point_t base1,
-    const ristretto255_scalar_t scalar1,
-    const ristretto255_scalar_t scalar2
+    ristretto255_point_t *a1,
+    ristretto255_point_t *a2,
+    const ristretto255_point_t *base1,
+    const ristretto255_scalar_t *scalar1,
+    const ristretto255_scalar_t *scalar2
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -575,10 +575,10 @@ void ristretto255_point_dual_scalarmul (
  * used.  It is designed for signature verification.
  */
 void ristretto255_base_double_scalarmul_non_secret (
-    ristretto255_point_t combo,
-    const ristretto255_scalar_t scalar1,
-    const ristretto255_point_t base2,
-    const ristretto255_scalar_t scalar2
+    ristretto255_point_t *combo,
+    const ristretto255_scalar_t *scalar1,
+    const ristretto255_point_t *base2,
+    const ristretto255_scalar_t *scalar2
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -591,9 +591,9 @@ void ristretto255_base_double_scalarmul_non_secret (
  * @param [in] pick_b If nonzero, choose point b.
  */
 void ristretto255_point_cond_sel (
-    ristretto255_point_t out,
-    const ristretto255_point_t a,
-    const ristretto255_point_t b,
+    ristretto255_point_t *out,
+    const ristretto255_point_t *a,
+    const ristretto255_point_t *b,
     ristretto_word_t pick_b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
@@ -607,9 +607,9 @@ void ristretto255_point_cond_sel (
  * @param [in] pick_b If nonzero, choose scalar b.
  */
 void ristretto255_scalar_cond_sel (
-    ristretto255_scalar_t out,
-    const ristretto255_scalar_t a,
-    const ristretto255_scalar_t b,
+    ristretto255_scalar_t *out,
+    const ristretto255_scalar_t *a,
+    const ristretto255_scalar_t *b,
     ristretto_word_t pick_b
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
@@ -621,7 +621,7 @@ void ristretto255_scalar_cond_sel (
  * @retval RISTRETTO_FALSE The point is invalid.
  */
 ristretto_bool_t ristretto255_point_valid (
-    const ristretto255_point_t to_test
+    const ristretto255_point_t *to_test
 ) RISTRETTO_WARN_UNUSED RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -632,8 +632,8 @@ ristretto_bool_t ristretto255_point_valid (
  * @param [in] p The point to torque.
  */
 void ristretto255_point_debugging_torque (
-    ristretto255_point_t q,
-    const ristretto255_point_t p
+    ristretto255_point_t *q,
+    const ristretto255_point_t *p
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
 /**
@@ -646,8 +646,8 @@ void ristretto255_point_debugging_torque (
  * @param [in] factor Serialized GF factor to scale.
  */
 void ristretto255_point_debugging_pscale (
-    ristretto255_point_t q,
-    const ristretto255_point_t p,
+    ristretto255_point_t *q,
+    const ristretto255_point_t *p,
     const unsigned char factor[RISTRETTO255_SER_BYTES]
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
@@ -680,7 +680,7 @@ void ristretto255_point_debugging_pscale (
  * @param [out] pt The data hashed to the curve.
  */
 void ristretto255_point_from_hash_nonuniform (
-    ristretto255_point_t pt,
+    ristretto255_point_t *pt,
     const unsigned char hashed_data[RISTRETTO255_HASH_BYTES]
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
@@ -693,7 +693,7 @@ void ristretto255_point_from_hash_nonuniform (
  * @param [out] pt The data hashed to the curve.
  */
 void ristretto255_point_from_hash_uniform (
-    ristretto255_point_t pt,
+    ristretto255_point_t *pt,
     const unsigned char hashed_data[2*RISTRETTO255_HASH_BYTES]
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE;
 
@@ -727,7 +727,7 @@ void ristretto255_point_from_hash_uniform (
  */
 ristretto_error_t ristretto255_invert_elligator_nonuniform (
     unsigned char recovered_hash[RISTRETTO255_HASH_BYTES],
-    const ristretto255_point_t pt,
+    const ristretto255_point_t *pt,
     uint32_t which
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE RISTRETTO_WARN_UNUSED;
 
@@ -751,20 +751,20 @@ ristretto_error_t ristretto255_invert_elligator_nonuniform (
  */
 ristretto_error_t ristretto255_invert_elligator_uniform (
     unsigned char recovered_hash[2*RISTRETTO255_HASH_BYTES],
-    const ristretto255_point_t pt,
+    const ristretto255_point_t *pt,
     uint32_t which
 ) RISTRETTO_NONNULL RISTRETTO_NOINLINE RISTRETTO_WARN_UNUSED;
 
 /** Securely erase a scalar. */
 void ristretto255_scalar_destroy (
-    ristretto255_scalar_t scalar
+    ristretto255_scalar_t *scalar
 ) RISTRETTO_NONNULL;
 
 /** Securely erase a point by overwriting it with zeros.
  * @warning This causes the point object to become invalid.
  */
 void ristretto255_point_destroy (
-    ristretto255_point_t point
+    ristretto255_point_t *point
 ) RISTRETTO_NONNULL;
 
 /** Securely erase a precomputed table by overwriting it with zeros.

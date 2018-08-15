@@ -5,7 +5,7 @@
 #include <ristretto255.h>
 #include "f_field.h"
 
-void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
+void gf_mul (gf_25519_t *__restrict__ cs, const gf_25519_t *as, const gf_25519_t *bs) {
     const uint64_t *a = as->limb, *b = bs->limb, mask = ((1ull<<51)-1);
 
     uint64_t bh[4];
@@ -35,7 +35,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     c[1] += accum;
 }
 
-void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
+void gf_mulw_unsigned (gf_25519_t *__restrict__ cs, const gf_25519_t *as, uint32_t b) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
     int i;
 
@@ -57,6 +57,6 @@ void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     c[1] += accum;
 }
 
-void gf_sqr (gf_s *__restrict__ cs, const gf as) {
+void gf_sqr (gf_25519_t *__restrict__ cs, const gf_25519_t *as) {
     gf_mul(cs,as,as); /* Performs better with dedicated square */
 }
