@@ -45,13 +45,17 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 
 extern crate curve25519_dalek;
+extern crate hex;
 extern crate libristretto255_sys;
 extern crate rand;
+extern crate sha2;
 
 pub mod constants;
 pub mod ristretto;
 pub mod scalar;
 pub mod util;
+#[cfg(test)]
+pub mod vectors;
 
 #[cfg(test)]
 #[allow(non_snake_case)]
