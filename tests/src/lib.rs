@@ -46,21 +46,14 @@
 
 extern crate curve25519_dalek;
 extern crate libristretto255_sys;
+extern crate rand;
 
+use rand::{CryptoRng, Rng};
 use std::fmt::{self, Debug};
 use std::mem;
 use std::ops::{Add, Mul, Neg, Sub};
 
-use libristretto255_sys::{
-    ristretto255_point_add, ristretto255_point_base, ristretto255_point_decode,
-    ristretto255_point_encode, ristretto255_point_eq, ristretto255_point_from_hash_uniform,
-    ristretto255_point_identity, ristretto255_point_negate, ristretto255_point_scalarmul,
-    ristretto255_point_sub, ristretto255_point_t, ristretto255_scalar_add,
-    ristretto255_scalar_encode, ristretto255_scalar_eq, ristretto255_scalar_mul,
-    ristretto255_scalar_set_unsigned, ristretto255_scalar_sub, ristretto255_scalar_t,
-    ristretto_bool_t, ristretto_error_t, RISTRETTO_FAILURE, RISTRETTO_FALSE, RISTRETTO_SUCCESS,
-    RISTRETTO_TRUE,
-};
+use libristretto255_sys::*;
 
 mod constants;
 
@@ -100,6 +93,18 @@ fn uninitialized_scalar_t() -> ristretto255_scalar_t {
 /// Scalars (i.e. wrapper around `ristretto255_scalar_t`)
 #[derive(Copy, Clone)]
 pub struct Scalar(ristretto255_scalar_t);
+
+impl Scalar {
+    /// Return a randomly generated `Scalar`
+    ///
+    /// This implementation isn't great as it only generates random scalars
+    /// within the 64-bit unsigned range.
+    ///
+    /// Ideally it could generate larger ones.
+    pub fn random<T: Rng + CryptoRng>(rng: &mut T) -> Self {
+        Scalar::from(rng.gen::<u64>())
+    }
+}
 
 // ------------------------------------------------------------------------
 // Equality
@@ -249,11 +254,11 @@ pub struct RistrettoPoint(ristretto255_point_t);
 
 impl RistrettoPoint {
     /// Compress this point using the Ristretto encoding.
-    pub fn compress(&mut self) -> CompressedRistretto {
+    pub fn compress(&self) -> CompressedRistretto {
         let mut bytes = [0u8; 32];
 
         unsafe {
-            ristretto255_point_encode(bytes.as_mut_ptr(), &mut self.0);
+            ristretto255_point_encode(bytes.as_mut_ptr(), &self.0);
         }
 
         CompressedRistretto(bytes)
@@ -425,14 +430,15 @@ impl Debug for RistrettoPoint {
 #[allow(non_snake_case)]
 mod test {
     use super::*;
+    use rand::OsRng;
 
     #[test]
     fn scalarmult_ristrettopoint_works_both_ways() {
         let P = RistrettoPoint::basepoint();
         let s = Scalar::from(999u64);
 
-        let mut P1 = P * s;
-        let mut P2 = s * P;
+        let P1 = P * s;
+        let P2 = s * P;
 
         assert!(P1.compress().as_bytes() == P2.compress().as_bytes());
     }
@@ -442,37 +448,40 @@ mod test {
         let compressed_id = CompressedRistretto::identity();
         let id = compressed_id.decompress().unwrap();
         let mut identity_in_coset = false;
+
         for P in id.coset4().iter_mut() {
             if P.compress() == CompressedRistretto::identity() {
                 identity_in_coset = true;
             }
         }
+
         assert!(identity_in_coset);
     }
 
     #[test]
     fn compress_id() {
-        let mut id = RistrettoPoint::identity();
+        let id = RistrettoPoint::identity();
         assert_eq!(id.compress(), CompressedRistretto::identity());
     }
 
     #[test]
     fn basepoint_roundtrip() {
-        let mut bp = RistrettoPoint::basepoint();
+        let bp = RistrettoPoint::basepoint();
         let bp_compressed_ristretto = bp.compress();
         assert_eq!(bp_compressed_ristretto.decompress().unwrap(), bp);
     }
 
-    // TODO: Scalar::random()
-    //#[test]
-    //fn random_roundtrip() {
-    //    let mut rng = OsRng::new().unwrap();
-    //    let B = &constants::RISTRETTO_BASEPOINT_TABLE;
-    //    for _ in 0..100 {
-    //        let P = B * Scalar::random(&mut rng);
-    //        let compressed_P = P.compress();
-    //        let Q = compressed_P.decompress().unwrap();
-    //        assert_eq!(P, Q);
-    //    }
-    //}
+    #[test]
+    fn random_roundtrip() {
+        let mut rng = OsRng::new().unwrap();
+        let B = RistrettoPoint::basepoint();
+
+        for _ in 0..100 {
+            let P = B * Scalar::random(&mut rng);
+            let compressed_P = P.compress();
+            let Q = compressed_P.decompress().unwrap();
+
+            assert_eq!(P, Q);
+        }
+    }
 }
