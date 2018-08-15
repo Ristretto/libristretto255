@@ -28,23 +28,11 @@ be used yet. Check back later for updates.
 
 ### Known Issues
 
-#### Test Suite
-
-* [#22]: Test suite is failing due to SEGVs and is commented out
-
 #### Travis CI
 
-* [#24]: Sporadic SEGV on Travis C with clang when running `ristretto_gen_tables`
-* [#19]: OS X is build-only (test suite not being run)
-
-#### Appveyor
-
-* [#21]: Windows is build-only (test suite not being run)
-
-[#19]: https://github.com/Ristretto/libristretto255/issues/19
-[#21]: https://github.com/Ristretto/libristretto255/issues/21
-[#22]: https://github.com/Ristretto/libristretto255/issues/22
-[#24]: https://github.com/Ristretto/libristretto255/issues/24
+* [#24]: Sporadic SEGV on Travis C with clang when running
+  `ristretto_gen_tables`. This has been worked-around by enabling ASAN,
+  but is probably indicative of deeper problems.
 
 ## License
 
