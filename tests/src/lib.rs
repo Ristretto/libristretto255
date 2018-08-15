@@ -58,8 +58,8 @@ use libristretto255_sys::{
     ristretto255_point_sub, ristretto255_point_t, ristretto255_scalar_add,
     ristretto255_scalar_encode, ristretto255_scalar_eq, ristretto255_scalar_mul,
     ristretto255_scalar_set_unsigned, ristretto255_scalar_sub, ristretto255_scalar_t,
-    ristretto_bool_t, ristretto_error_t, ristretto_error_t_RISTRETTO_FAILURE as RISTRETTO_FAILURE,
-    ristretto_error_t_RISTRETTO_SUCCESS as RISTRETTO_SUCCESS, RISTRETTO_FALSE, RISTRETTO_TRUE,
+    ristretto_bool_t, ristretto_error_t, RISTRETTO_FAILURE, RISTRETTO_FALSE, RISTRETTO_SUCCESS,
+    RISTRETTO_TRUE,
 };
 
 mod constants;
@@ -422,51 +422,48 @@ impl Debug for RistrettoPoint {
 // ------------------------------------------------------------------------
 
 #[cfg(test)]
+#[allow(non_snake_case)]
 mod test {
     use super::*;
 
-    // TODO: fix segv
-    //#[test]
-    //fn scalarmult_ristrettopoint_works_both_ways() {
-    //    let P = RistrettoPoint::basepoint();
-    //    let s = Scalar::from(999u64);
-    //
-    //    let mut P1 = P * s;
-    //    let mut P2 = s * P;
-    //
-    //    assert!(P1.compress().as_bytes() == P2.compress().as_bytes());
-    //}
+    #[test]
+    fn scalarmult_ristrettopoint_works_both_ways() {
+        let P = RistrettoPoint::basepoint();
+        let s = Scalar::from(999u64);
 
-    // TODO: fix segv
-    //#[test]
-    //fn decompress_id() {
-    //    let compressed_id = CompressedRistretto::identity();
-    //    let id = compressed_id.decompress().unwrap();
-    //    let mut identity_in_coset = false;
-    //    for P in id.coset4().iter_mut() {
-    //        if P.compress() == CompressedRistretto::identity() {
-    //            identity_in_coset = true;
-    //        }
-    //    }
-    //    assert!(identity_in_coset);
-    //}
+        let mut P1 = P * s;
+        let mut P2 = s * P;
 
-    // TODO: fix segv
-    //#[test]
-    //fn compress_id() {
-    //    let mut id = RistrettoPoint::identity();
-    //    assert_eq!(id.compress(), CompressedRistretto::identity());
-    //}
+        assert!(P1.compress().as_bytes() == P2.compress().as_bytes());
+    }
 
-    // TODO: fix segv
-    //#[test]
-    //fn basepoint_roundtrip() {
-    //    let mut bp = RistrettoPoint::basepoint();
-    //    let bp_compressed_ristretto = bp.compress();
-    //    assert_eq!(bp_compressed_ristretto.decompress().unwrap(), bp);
-    //}
+    #[test]
+    fn decompress_id() {
+        let compressed_id = CompressedRistretto::identity();
+        let id = compressed_id.decompress().unwrap();
+        let mut identity_in_coset = false;
+        for P in id.coset4().iter_mut() {
+            if P.compress() == CompressedRistretto::identity() {
+                identity_in_coset = true;
+            }
+        }
+        assert!(identity_in_coset);
+    }
 
-    // TODO: Scalar::random() (and probably segv)
+    #[test]
+    fn compress_id() {
+        let mut id = RistrettoPoint::identity();
+        assert_eq!(id.compress(), CompressedRistretto::identity());
+    }
+
+    #[test]
+    fn basepoint_roundtrip() {
+        let mut bp = RistrettoPoint::basepoint();
+        let bp_compressed_ristretto = bp.compress();
+        assert_eq!(bp_compressed_ristretto.decompress().unwrap(), bp);
+    }
+
+    // TODO: Scalar::random()
     //#[test]
     //fn random_roundtrip() {
     //    let mut rng = OsRng::new().unwrap();
