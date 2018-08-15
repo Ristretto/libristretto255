@@ -34,6 +34,8 @@ be used yet. Check back later for updates.
   `ristretto_gen_tables`. This has been worked-around by enabling ASAN,
   but is probably indicative of deeper problems.
 
+[#24]: https://github.com/Ristretto/libristretto255/issues/24
+
 ## License
 
 Copyright (c) 2014-2018 Ristretto Developers ([AUTHORS.md]),
