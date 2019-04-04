@@ -1,3 +1,5 @@
+**DISCONTINUED:** Please check out [ristretto-donna](https://github.com/isislovecruft/ristretto-donna) instead if you are looking for a Ristretto C library
+
 # libristretto255 [![Build Status][build-image]][build-link] [![Appveyor Status][appveyor-image]][appveyor-link]
 
 [build-image]: https://travis-ci.org/Ristretto/libristretto255.svg?branch=master
